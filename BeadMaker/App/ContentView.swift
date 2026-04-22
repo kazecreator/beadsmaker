@@ -8,6 +8,10 @@ struct ContentView: View {
     @State private var editorRoute: EditorRoute?
     @State private var selectedTab = 0
 
+    private var isAdmin: Bool {
+        profiles.first?.isAdmin == true
+    }
+
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
@@ -27,6 +31,14 @@ struct ContentView: View {
             }
             .tag(1)
             .tabItem { Label("Marketplace", systemImage: "bag.fill") }
+
+            if isAdmin {
+                NavigationStack {
+                    ModerationView()
+                }
+                .tag(3)
+                .tabItem { Label("Moderation", systemImage: "checkmark.shield") }
+            }
 
             NavigationStack {
                 ProfileView()
