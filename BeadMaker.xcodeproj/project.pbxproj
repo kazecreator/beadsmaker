@@ -11,6 +11,7 @@
 		04B9547CB4D06BDDA831CC56 /* ColorPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2C6F0503AA5638B5600387 /* ColorPanelView.swift */; };
 		0E2AFA6A9CC63434818A7194 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F4582FBE525393C0400B87 /* QRGeneratorView.swift */; };
 		256097CAC28F5AC15D7B9E86 /* PatternRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */; };
+		2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F2E215D26C4581BA636E18 /* ImageImporter.swift */; };
 		451D1B4A53F7D9480B83E56B /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691B718223BB738AD7A48FBE /* ShareView.swift */; };
 		497301E28E949D71F2225695 /* PixelAvatarLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7EFB7C269972FBA195A086 /* PixelAvatarLibrary.swift */; };
 		4E3BB548D434875E493B39F3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8921527B69A89616F210AC /* ContentView.swift */; };
@@ -36,6 +37,7 @@
 		186F2CFC7F518F1C2893CACC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1C8921527B69A89616F210AC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1D8ECA38224DCB526054DF93 /* PatternCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternCardView.swift; sourceTree = "<group>"; };
+		31F2E215D26C4581BA636E18 /* ImageImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageImporter.swift; sourceTree = "<group>"; };
 		3759C901E3220642F397C3A3 /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
 		40D2EA2622B2B262E7344B52 /* BeadColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadColor.swift; sourceTree = "<group>"; };
 		5939A0E0C5A18D6E580EAEE7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				8A3E6A57B424740278A012E1 /* BeadColorLibrary.swift */,
+				31F2E215D26C4581BA636E18 /* ImageImporter.swift */,
 				5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */,
 				AB7EFB7C269972FBA195A086 /* PixelAvatarLibrary.swift */,
 			);
@@ -248,6 +251,7 @@
 				D3371E0BBDB9E7E172D5BAFE /* EditorView.swift in Sources */,
 				A777EF6764D76F2BDB07F004 /* EditorViewModel.swift in Sources */,
 				73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */,
+				2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */,
 				DCA0AA6F1C5A3B4666E07FA5 /* Pattern.swift in Sources */,
 				9595F7A55E53BB7B83363452 /* PatternCardView.swift in Sources */,
 				8C02B7C6573D4D44564EC1BA /* PatternCodec.swift in Sources */,

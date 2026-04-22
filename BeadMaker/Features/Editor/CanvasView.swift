@@ -109,6 +109,9 @@ private struct NativeCanvasScrollView: UIViewRepresentable {
         canvasView.onPaintCell = { row, col in
             viewModel.paintCell(on: pattern, row: row, col: col)
         }
+        canvasView.onEndStroke = {
+            viewModel.endStroke(on: pattern)
+        }
 
         if context.coordinator.canvasSize != canvasSize {
             containerView.frame = CGRect(origin: .zero, size: canvasSize)
@@ -240,6 +243,7 @@ private final class PixelCanvasUIView: UIView {
 
     var onBeginStroke: (() -> Void)?
     var onPaintCell: ((Int, Int) -> Void)?
+    var onEndStroke: (() -> Void)?
 
     private var gridData: [Int] = []
     private var widthCount = 0
@@ -618,6 +622,9 @@ private final class PixelCanvasUIView: UIView {
     }
 
     private func resetTouchState() {
+        if didBeginStroke {
+            onEndStroke?()
+        }
         lastTouchedCell = nil
         didBeginStroke = false
     }

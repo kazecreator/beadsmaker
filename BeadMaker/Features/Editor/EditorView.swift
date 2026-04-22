@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
+import UIKit
 
 struct EditorView: View {
     let patternID: PersistentIdentifier
@@ -9,6 +11,10 @@ struct EditorView: View {
     @State private var showShare = false
     @State private var showRenameAlert = false
     @State private var pendingName = ""
+    @State private var selectedImportPhoto: PhotosPickerItem?
+    @State private var importErrorMessage = ""
+    @State private var showImportError = false
+    @State private var isImportingPhoto = false
     @Environment(\.modelContext) private var modelContext
 
     init(patternID: PersistentIdentifier) {
@@ -67,6 +73,12 @@ struct EditorView: View {
                     Image(systemName: "pencil.line")
                 }
             }
+            ToolbarItem(placement: .topBarLeading) {
+                PhotosPicker(selection: $selectedImportPhoto, matching: .images) {
+                    Image(systemName: "photo")
+                }
+                .disabled(isImportingPhoto)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showStats = true } label: {
                     Image(systemName: "chart.bar.fill")
@@ -113,6 +125,23 @@ struct EditorView: View {
             }
             Button("取消", role: .cancel) {}
         }
+        .alert("导入失败", isPresented: $showImportError) {
+            Button("好的", role: .cancel) {}
+        } message: {
+            Text(importErrorMessage)
+        }
+        .overlay {
+            if isImportingPhoto {
+                ZStack {
+                    Color.black.opacity(0.18)
+                        .ignoresSafeArea()
+                    ProgressView("正在生成拼豆图纸…")
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 18)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+            }
+        }
         .onDisappear {
             if let pattern {
                 viewModel.updateThumbnail(for: pattern)
@@ -124,6 +153,43 @@ struct EditorView: View {
         }
         .onChange(of: patternID) { _, _ in
             viewModel.resetForCanvasOpen()
+        }
+        .onChange(of: selectedImportPhoto) { _, item in
+            guard let item else { return }
+            Task {
+                await importPhoto(item)
+            }
+        }
+    }
+
+    @MainActor
+    private func importPhoto(_ item: PhotosPickerItem) async {
+        guard let pattern else { return }
+
+        isImportingPhoto = true
+        defer {
+            isImportingPhoto = false
+            selectedImportPhoto = nil
+        }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else {
+                throw ImageImporterError.invalidImage
+            }
+
+            let gridData = try ImageImporter.makePattern(
+                from: image,
+                targetWidth: pattern.width,
+                targetHeight: pattern.height
+            )
+
+            viewModel.applyImportedPattern(on: pattern, width: pattern.width, height: pattern.height, gridData: gridData)
+            viewModel.updateThumbnail(for: pattern)
+            try? modelContext.save()
+        } catch {
+            importErrorMessage = error.localizedDescription
+            showImportError = true
         }
     }
 }

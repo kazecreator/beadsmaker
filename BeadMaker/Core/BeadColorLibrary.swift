@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum BeadColorLibrary {
     static let colors: [BeadColor] = [
@@ -344,6 +345,26 @@ enum BeadColorLibrary {
             .sorted(by: sortForDisplay)
     }
 
+    static func nearestColorId(red: UInt8, green: UInt8, blue: UInt8) -> Int {
+        var bestColorId = colors.first?.id ?? 0
+        var smallestDistance = Double.greatestFiniteMagnitude
+
+        for bead in colors {
+            let rgb = rgbComponents(for: bead.uiColor)
+            let redDelta = Double(Int(red) - Int(rgb.red))
+            let greenDelta = Double(Int(green) - Int(rgb.green))
+            let blueDelta = Double(Int(blue) - Int(rgb.blue))
+            let distance = (redDelta * redDelta * 0.30) + (greenDelta * greenDelta * 0.59) + (blueDelta * blueDelta * 0.11)
+
+            if distance < smallestDistance {
+                smallestDistance = distance
+                bestColorId = bead.id
+            }
+        }
+
+        return bestColorId
+    }
+
     private static func sortForDisplay(_ lhs: BeadColor, _ rhs: BeadColor) -> Bool {
         let left = splitCode(lhs.standardCode ?? lhs.colorCode)
         let right = splitCode(rhs.standardCode ?? rhs.colorCode)
@@ -360,5 +381,28 @@ enum BeadColorLibrary {
         let prefix = String(code.prefix { $0.isLetter })
         let number = Int(code.drop { $0.isLetter }) ?? 0
         return (prefix, number)
+    }
+
+    private static func rgbComponents(for color: UIColor) -> (red: UInt8, green: UInt8, blue: UInt8) {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        if color.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return (
+                red: UInt8((red * 255).rounded()),
+                green: UInt8((green * 255).rounded()),
+                blue: UInt8((blue * 255).rounded())
+            )
+        }
+
+        var white: CGFloat = 0
+        if color.getWhite(&white, alpha: &alpha) {
+            let value = UInt8((white * 255).rounded())
+            return (red: value, green: value, blue: value)
+        }
+
+        return (red: 0, green: 0, blue: 0)
     }
 }

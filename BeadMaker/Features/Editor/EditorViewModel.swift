@@ -8,14 +8,33 @@ enum DrawingTool: String, CaseIterable {
 
 @Observable
 final class EditorViewModel {
+    private struct PatternSnapshot {
+        let width: Int
+        let height: Int
+        let gridData: [Int]
+    }
+
+    private struct CellChange {
+        let index: Int
+        let fromColorId: Int
+        let toColorId: Int
+    }
+
+    private enum HistoryAction {
+        case cellChanges([CellChange])
+        case snapshot(PatternSnapshot)
+    }
+
     var selectedColorId: Int = 1
     var selectedColorGroup: ColorGroup = .red
     var currentTool: DrawingTool = .pen
     var isPanMode: Bool = true
     var recentColors: [Int] = []
 
-    private var undoStack: [[Int]] = []
-    private var redoStack: [[Int]] = []
+    private let maxHistorySteps = 50
+    private var undoStack: [HistoryAction] = []
+    private var redoStack: [HistoryAction] = []
+    private var activeStrokeChanges: [Int: CellChange] = [:]
 
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
@@ -23,16 +42,32 @@ final class EditorViewModel {
     // MARK: - Drawing
 
     func beginStroke(on pattern: Pattern) {
-        saveUndoState(for: pattern)
+        guard activeStrokeChanges.isEmpty else { return }
+        activeStrokeChanges = [:]
     }
 
     func paintCell(on pattern: Pattern, row: Int, col: Int) {
+        guard row >= 0, row < pattern.height, col >= 0, col < pattern.width else { return }
+
+        let index = row * pattern.width + col
+        let originalColorId = pattern.gridData[index]
+        let newColorId: Int
+
         switch currentTool {
         case .pen:
-            pattern.setColor(selectedColorId, at: row, col: col)
-            addRecentColor(selectedColorId)
+            newColorId = selectedColorId
         case .eraser:
-            pattern.setColor(0, at: row, col: col)
+            newColorId = 0
+        }
+
+        guard originalColorId != newColorId else { return }
+
+        let initialColorId = activeStrokeChanges[index]?.fromColorId ?? originalColorId
+        pattern.setColor(newColorId, at: row, col: col)
+        activeStrokeChanges[index] = CellChange(index: index, fromColorId: initialColorId, toColorId: newColorId)
+
+        if currentTool == .pen {
+            addRecentColor(selectedColorId)
         }
     }
 
@@ -40,26 +75,59 @@ final class EditorViewModel {
         pattern.setColor(0, at: row, col: col)
     }
 
-    // MARK: - Undo / Redo
+    func endStroke(on pattern: Pattern) {
+        defer { activeStrokeChanges.removeAll() }
+        guard !activeStrokeChanges.isEmpty else { return }
 
-    private func saveUndoState(for pattern: Pattern) {
-        undoStack.append(pattern.gridData)
-        if undoStack.count > 50 { undoStack.removeFirst() }
+        let action = HistoryAction.cellChanges(activeStrokeChanges.values.sorted { $0.index < $1.index })
+        pushUndoAction(action)
+        redoStack.removeAll()
+        pattern.modifiedAt = Date()
+    }
+
+    func applyImportedPattern(on pattern: Pattern, width: Int, height: Int, gridData: [Int]) {
+        finishActiveStrokeIfNeeded(on: pattern)
+
+        let previousSnapshot = snapshot(for: pattern)
+        guard previousSnapshot.width != width || previousSnapshot.height != height || previousSnapshot.gridData != gridData else {
+            return
+        }
+
+        pattern.width = width
+        pattern.height = height
+        pattern.gridData = gridData
+        pattern.modifiedAt = Date()
+
+        pushUndoAction(.snapshot(previousSnapshot))
         redoStack.removeAll()
     }
 
+    // MARK: - Undo / Redo
+
+    private func pushUndoAction(_ action: HistoryAction) {
+        undoStack.append(action)
+        if undoStack.count > maxHistorySteps {
+            undoStack.removeFirst()
+        }
+    }
+
     func undo(on pattern: Pattern) {
-        guard let state = undoStack.popLast() else { return }
-        redoStack.append(pattern.gridData)
-        pattern.gridData = state
-        pattern.modifiedAt = Date()
+        finishActiveStrokeIfNeeded(on: pattern)
+        guard let action = undoStack.popLast() else { return }
+
+        let redoAction = apply(action: action, on: pattern)
+        redoStack.append(redoAction)
+        if redoStack.count > maxHistorySteps {
+            redoStack.removeFirst()
+        }
     }
 
     func redo(on pattern: Pattern) {
-        guard let state = redoStack.popLast() else { return }
-        undoStack.append(pattern.gridData)
-        pattern.gridData = state
-        pattern.modifiedAt = Date()
+        finishActiveStrokeIfNeeded(on: pattern)
+        guard let action = redoStack.popLast() else { return }
+
+        let undoAction = apply(action: action, on: pattern)
+        pushUndoAction(undoAction)
     }
 
     // MARK: - Recent Colors
@@ -95,6 +163,52 @@ final class EditorViewModel {
     }
 
     func resetForCanvasOpen() {
+        undoStack.removeAll()
+        redoStack.removeAll()
+        activeStrokeChanges.removeAll()
         isPanMode = true
+    }
+
+    private func finishActiveStrokeIfNeeded(on pattern: Pattern) {
+        if !activeStrokeChanges.isEmpty {
+            endStroke(on: pattern)
+        }
+    }
+
+    @discardableResult
+    private func apply(action: HistoryAction, on pattern: Pattern) -> HistoryAction {
+        switch action {
+        case .cellChanges(let changes):
+            var inverseChanges: [CellChange] = []
+            inverseChanges.reserveCapacity(changes.count)
+
+            for change in changes {
+                guard change.index >= 0 else { continue }
+                let row = change.index / max(pattern.width, 1)
+                let col = change.index % max(pattern.width, 1)
+                let currentColorId = pattern.colorIndex(at: row, col: col)
+
+                if currentColorId != change.toColorId {
+                    pattern.setColor(change.toColorId, at: row, col: col)
+                }
+
+                inverseChanges.append(CellChange(index: change.index, fromColorId: change.toColorId, toColorId: currentColorId))
+            }
+
+            pattern.modifiedAt = Date()
+            return .cellChanges(inverseChanges)
+
+        case .snapshot(let targetSnapshot):
+            let previousSnapshot = snapshot(for: pattern)
+            pattern.width = targetSnapshot.width
+            pattern.height = targetSnapshot.height
+            pattern.gridData = targetSnapshot.gridData
+            pattern.modifiedAt = Date()
+            return .snapshot(previousSnapshot)
+        }
+    }
+
+    private func snapshot(for pattern: Pattern) -> PatternSnapshot {
+        PatternSnapshot(width: pattern.width, height: pattern.height, gridData: pattern.gridData)
     }
 }
