@@ -16,6 +16,7 @@ struct IroningAnimationView: View {
     @State private var showsFinishedSide = false
     @State private var showsCelebration = false
     @State private var showsFinishedBadge = false
+    @State private var animationTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -89,6 +90,10 @@ struct IroningAnimationView: View {
         }
         .statusBarHidden()
         .onAppear(perform: runAnimationSequence)
+        .onDisappear {
+            animationTask?.cancel()
+            animationTask = nil
+        }
         .onTapGesture {
             if showsFinishedSide {
                 dismissAnimation()
@@ -97,19 +102,24 @@ struct IroningAnimationView: View {
     }
 
     private func runAnimationSequence() {
-        withAnimation(.easeInOut(duration: 0.4)) {
-            rotation = 90
-        }
+        animationTask?.cancel()
+        animationTask = Task { @MainActor in
+            withAnimation(.easeInOut(duration: 0.4)) {
+                rotation = 90
+            }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled, isPresented else { return }
+
             showsFinishedSide = true
 
             withAnimation(.easeInOut(duration: 0.4)) {
                 rotation = 180
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.82) {
+            try? await Task.sleep(nanoseconds: 420_000_000)
+            guard !Task.isCancelled, isPresented else { return }
+
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.prepare()
             generator.impactOccurred()
@@ -118,15 +128,17 @@ struct IroningAnimationView: View {
                 showsCelebration = true
                 showsFinishedBadge = true
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.85) {
+            try? await Task.sleep(nanoseconds: 1_030_000_000)
+            guard !Task.isCancelled, isPresented else { return }
             dismissAnimation()
         }
     }
 
     private func dismissAnimation() {
         guard isPresented else { return }
+        animationTask?.cancel()
+        animationTask = nil
 
         withAnimation(.easeOut(duration: 0.25)) {
             isPresented = false

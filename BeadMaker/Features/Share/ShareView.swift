@@ -204,6 +204,7 @@ private struct MarketplaceSubmissionSheet: View {
     let previewImage: UIImage
 
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(AppConstants.githubPATKey) private var githubPAT = ""
 
     @State private var patternName: String
     @State private var authorName: String
@@ -313,8 +314,8 @@ private struct MarketplaceSubmissionSheet: View {
 
     @MainActor
     private func submit() async {
-        let token = UserDefaults.standard.string(forKey: AppConstants.githubPATKey)
-        guard let token, !token.isEmpty else {
+        let token = githubPAT.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else {
             presentAlert(
                 title: "Marketplace 不可用",
                 message: "Marketplace 投稿功能仅对管理员开放。",

@@ -6,13 +6,14 @@ struct ModerationView: View {
     @Query private var profiles: [UserProfile]
     @StateObject private var viewModel = ModerationViewModel()
     @State private var patInput: String = ""
-    @State private var showPatSetup: Bool = false
+    @AppStorage(AppConstants.githubPATKey) private var githubPAT = ""
 
     private var profile: UserProfile? { profiles.first }
     private var isAdmin: Bool { profile?.isAdmin == true }
 
     private var storedPat: String? {
-        UserDefaults.standard.string(forKey: AppConstants.githubPATKey)
+        let trimmed = githubPAT.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     var body: some View {
@@ -72,8 +73,7 @@ struct ModerationView: View {
             Button {
                 let trimmed = patInput.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !trimmed.isEmpty else { return }
-                UserDefaults.standard.set(trimmed, forKey: AppConstants.githubPATKey)
-                showPatSetup = false
+                githubPAT = trimmed
             } label: {
                 Text("保存并继续")
                     .frame(maxWidth: .infinity)

@@ -67,7 +67,7 @@ private struct MarketplacePatternRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            MarketplaceThumbnailView(url: pattern.thumbnailURL)
+            MarketplaceThumbnailView(pattern: pattern)
                 .frame(width: 92, height: 92)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -111,7 +111,7 @@ private struct MarketplaceDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                MarketplaceThumbnailView(url: pattern.thumbnailURL)
+                MarketplaceThumbnailView(pattern: pattern)
                     .frame(maxWidth: .infinity)
                     .frame(height: 240)
 
@@ -161,14 +161,14 @@ private struct MarketplaceDetailView: View {
 }
 
 private struct MarketplaceThumbnailView: View {
-    let url: URL?
+    let pattern: MarketplacePattern
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.systemFill))
 
-            if let url {
+            if let url = pattern.thumbnailURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
@@ -193,9 +193,71 @@ private struct MarketplaceThumbnailView: View {
     }
 
     private var placeholder: some View {
-        Image(systemName: "square.grid.3x3.fill")
-            .font(.system(size: 34))
-            .foregroundStyle(.tertiary)
+        MarketplacePatternArtworkView(pattern: pattern)
+            .padding(10)
+    }
+}
+
+private struct MarketplacePatternArtworkView: View {
+    let pattern: MarketplacePattern
+
+    var body: some View {
+        GeometryReader { proxy in
+            let layout = PatternSheetLayout(
+                containerSize: proxy.size,
+                columns: pattern.width,
+                rows: pattern.height,
+                padding: 8
+            )
+
+            Canvas { context, _ in
+                let bounds = CGRect(origin: .zero, size: layout.contentSize)
+                let boardPath = Path(
+                    roundedRect: bounds,
+                    cornerRadius: max(layout.cellSize * 0.18, 6)
+                )
+
+                context.fill(boardPath, with: .color(Color(.secondarySystemBackground)))
+
+                for row in 0..<pattern.height {
+                    for col in 0..<pattern.width {
+                        let index = row * pattern.width + col
+                        guard pattern.gridData.indices.contains(index) else { continue }
+
+                        let cellRect = layout.cellRect(row: row, col: col)
+                        let cellPath = Path(cellRect)
+                        let fillColor = PatternSheetPalette.pixelColor(
+                            for: pattern.gridData[index],
+                            row: row,
+                            col: col
+                        )
+
+                        context.fill(cellPath, with: .color(fillColor))
+                    }
+                }
+
+                var gridPath = Path()
+                for row in 0...pattern.height {
+                    let y = CGFloat(row) * layout.cellSize
+                    gridPath.move(to: CGPoint(x: 0, y: y))
+                    gridPath.addLine(to: CGPoint(x: layout.contentSize.width, y: y))
+                }
+
+                for col in 0...pattern.width {
+                    let x = CGFloat(col) * layout.cellSize
+                    gridPath.move(to: CGPoint(x: x, y: 0))
+                    gridPath.addLine(to: CGPoint(x: x, y: layout.contentSize.height))
+                }
+
+                context.stroke(
+                    gridPath,
+                    with: .color(Color.black.opacity(0.12)),
+                    lineWidth: max(layout.cellSize * 0.04, 0.5)
+                )
+            }
+            .frame(width: layout.contentSize.width, height: layout.contentSize.height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 }
 
