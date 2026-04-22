@@ -5,15 +5,24 @@ import UIKit
 struct ModerationView: View {
     @Query private var profiles: [UserProfile]
     @StateObject private var viewModel = ModerationViewModel()
+    @State private var patInput: String = ""
+    @State private var showPatSetup: Bool = false
 
     private var profile: UserProfile? { profiles.first }
-    private var token: String? { profile?.trimmedGitHubToken }
     private var isAdmin: Bool { profile?.isAdmin == true }
+
+    private var storedPat: String? {
+        UserDefaults.standard.string(forKey: AppConstants.githubPATKey)
+    }
 
     var body: some View {
         Group {
-            if isAdmin, let token {
-                moderationContent(token: token)
+            if isAdmin {
+                if storedPat != nil {
+                    moderationContentView
+                } else {
+                    patSetupView
+                }
             } else {
                 ContentUnavailableView(
                     "Moderation Unavailable",
@@ -33,7 +42,52 @@ struct ModerationView: View {
     }
 
     @ViewBuilder
-    private func moderationContent(token: String) -> some View {
+    private var patSetupView: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Image(systemName: "key.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                Text("设置 GitHub Personal Access Token")
+                    .font(.headline)
+                Text("用于访问 GitHub 仓库并审核投稿。请输入您的 GitHub PAT。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 40)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("GitHub PAT")
+                    .font(.subheadline.weight(.medium))
+                SecureField("ghp_xxxxxxxxxxxx", text: $patInput)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .padding(.horizontal)
+
+            Button {
+                let trimmed = patInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                UserDefaults.standard.set(trimmed, forKey: AppConstants.githubPATKey)
+                showPatSetup = false
+            } label: {
+                Text("保存并继续")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+            .disabled(patInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var moderationContentView: some View {
         Group {
             switch viewModel.state {
             case .idle, .loading:
@@ -47,8 +101,10 @@ struct ModerationView: View {
                     Text(message)
                 } actions: {
                     Button("Try Again") {
-                        Task {
-                            await viewModel.reload(token: token)
+                        if let token = storedPat {
+                            Task {
+                                await viewModel.reload(token: token)
+                            }
                         }
                     }
                 }
@@ -67,13 +123,17 @@ struct ModerationView: View {
                                 submission: submission,
                                 isProcessing: viewModel.processingIssueNumbers.contains(submission.id),
                                 onApprove: {
-                                    Task {
-                                        await viewModel.approveSubmission(submission, token: token)
+                                    if let token = storedPat {
+                                        Task {
+                                            await viewModel.approveSubmission(submission, token: token)
+                                        }
                                     }
                                 },
                                 onReject: {
-                                    Task {
-                                        await viewModel.rejectSubmission(submission, token: token)
+                                    if let token = storedPat {
+                                        Task {
+                                            await viewModel.rejectSubmission(submission, token: token)
+                                        }
                                     }
                                 }
                             )
@@ -81,8 +141,10 @@ struct ModerationView: View {
 
                         if viewModel.canLoadMore {
                             Button {
-                                Task {
-                                    await viewModel.loadMore(token: token)
+                                if let token = storedPat {
+                                    Task {
+                                        await viewModel.loadMore(token: token)
+                                    }
                                 }
                             } label: {
                                 if viewModel.isLoadingMore {
@@ -100,12 +162,25 @@ struct ModerationView: View {
                     .padding()
                 }
                 .refreshable {
-                    await viewModel.reload(token: token)
+                    if let token = storedPat {
+                        await viewModel.reload(token: token)
+                    }
                 }
             }
         }
-        .task(id: token) {
-            await viewModel.loadIfNeeded(token: token)
+        .onChange(of: storedPat) { _, newToken in
+            if let token = newToken {
+                Task {
+                    await viewModel.loadIfNeeded(token: token)
+                }
+            }
+        }
+        .onAppear {
+            if let token = storedPat {
+                Task {
+                    await viewModel.loadIfNeeded(token: token)
+                }
+            }
         }
     }
 
