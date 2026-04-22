@@ -6,12 +6,12 @@ struct ScannerView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \CollectedPattern.modifiedAt, order: .reverse) private var collectedPatterns: [CollectedPattern]
     var onSavedToGallery: (() -> Void)?
-    @State private var scannedPayload: (name: String, width: Int, height: Int, gridData: [Int])?
-    @State private var showPreview = false
+    var onFavoriteSaved: ((String) -> Void)?
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var cameraPermissionDenied = false
     @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isImporting = false
 
     var body: some View {
         ZStack {
@@ -53,32 +53,31 @@ struct ScannerView: View {
         .onChange(of: selectedPhoto) { _, item in
             Task { await loadPhoto(item) }
         }
-        .sheet(isPresented: $showPreview) {
-            if let payload = scannedPayload {
-                ScannedPatternPreview(payload: payload) { save in
-                    if save {
-                        saveCollectedPattern(payload)
-                        onSavedToGallery?()
-                    }
-                    scannedPayload = nil
-                    showPreview = false
-                }
-            }
-        }
         .alert("扫码失败", isPresented: $showError) {
             Button("好的", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "无法识别该二维码")
         }
+        .overlay {
+            if isImporting {
+                ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+
+                    ProgressView("正在加入收藏…")
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 18)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+            }
+        }
     }
 
     private func handleScanResult(_ string: String) {
-        do {
-            let result = try PatternCodec.decodeQRCodeString(string)
-            scannedPayload = result
-            showPreview = true
-        } catch {
-            showScanError(error.localizedDescription)
+        guard !isImporting else { return }
+
+        Task {
+            await importFavorite(from: string)
         }
     }
 
@@ -97,35 +96,26 @@ struct ScannerView: View {
         let features = detector?.features(in: ciImage) as? [CIQRCodeFeature]
 
         if let message = features?.first?.messageString {
-            await MainActor.run { handleScanResult(message) }
+            await importFavorite(from: message)
         } else {
             await MainActor.run { showScanError("图片中未找到有效的二维码") }
         }
     }
 
-    private func saveCollectedPattern(_ payload: (name: String, width: Int, height: Int, gridData: [Int])) {
-        guard let signature = try? PatternCodec.collectionSignature(
-            width: payload.width,
-            height: payload.height,
-            gridData: payload.gridData
-        ) else { return }
+    @MainActor
+    private func importFavorite(from string: String) async {
+        guard !isImporting else { return }
+        isImporting = true
+        defer { isImporting = false }
 
-        if collectedPatterns.contains(where: { $0.signature == signature }) {
-            return
+        do {
+            let payload = try await FavoriteImportService.importFromQRCode(string)
+            try FavoriteImportService.saveFavorite(payload, in: modelContext, existingFavorites: collectedPatterns)
+            onSavedToGallery?()
+            onFavoriteSaved?("已加入收藏")
+        } catch {
+            showScanError(error.localizedDescription)
         }
-
-        let draft = Pattern(name: payload.name, width: payload.width, height: payload.height)
-        draft.gridData = payload.gridData
-        let collected = CollectedPattern(
-            name: payload.name,
-            width: payload.width,
-            height: payload.height,
-            gridData: payload.gridData,
-            thumbnailData: PatternRenderer.thumbnail(pattern: draft).pngData(),
-            signature: signature
-        )
-        modelContext.insert(collected)
-        try? modelContext.save()
     }
 }
 
@@ -154,52 +144,6 @@ private struct QRScannerRepresentable: UIViewControllerRepresentable {
         }
         func scannerDidFailPermission(_ scanner: QRScannerController) {
             parent.onPermissionDenied()
-        }
-    }
-}
-
-// MARK: - Preview Sheet
-
-private struct ScannedPatternPreview: View {
-    let payload: (name: String, width: Int, height: Int, gridData: [Int])
-    let onAction: (Bool) -> Void
-
-    private var previewImage: UIImage {
-        let p = Pattern(name: payload.name, width: payload.width, height: payload.height)
-        p.gridData = payload.gridData
-        return PatternRenderer.render(pattern: p, cellSize: 6)
-    }
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(uiImage: previewImage)
-                    .resizable()
-                    .scaledToFit()
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(radius: 6)
-                    .padding()
-
-                VStack(spacing: 6) {
-                    Text(payload.name).font(.title2.bold())
-                    Text("\(payload.width) × \(payload.height)").foregroundStyle(.secondary)
-                }
-
-                Spacer()
-            }
-            .navigationTitle("预览图纸")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("取消") { onAction(false) }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("导入图纸") { onAction(true) }
-                        .bold()
-                }
-            }
         }
     }
 }

@@ -5,21 +5,21 @@ import UIKit
 
 struct GalleryView: View {
     @Query(sort: \Pattern.modifiedAt, order: .reverse) private var patterns: [Pattern]
-    @Query(sort: \CollectedPattern.modifiedAt, order: .reverse) private var collectedPatterns: [CollectedPattern]
     @Environment(\.modelContext) private var modelContext
     var onSelectPattern: (Pattern) -> Void
 
+    @State private var selectedSegment = 0
     @State private var searchText = ""
     @State private var showNewSheet = false
     @State private var patternToDelete: Pattern?
-    @State private var collectedPatternToDelete: CollectedPattern?
     @State private var showDeletePatternAlert = false
-    @State private var showDeleteCollectedAlert = false
     @State private var showImportSheet = false
     @State private var showScannerSheet = false
     @State private var importErrorMessage = ""
     @State private var showImportError = false
     @State private var isImportingPhoto = false
+    @State private var toastMessage: String?
+    @State private var showToast = false
 
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 16)]
 
@@ -27,61 +27,51 @@ struct GalleryView: View {
         searchText.isEmpty ? patterns : patterns.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
 
-    private var filteredCollectedPatterns: [CollectedPattern] {
-        searchText.isEmpty ? collectedPatterns : collectedPatterns.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
-
-    private var hasAnyContent: Bool {
-        !patterns.isEmpty || !collectedPatterns.isEmpty
-    }
-
     var body: some View {
-        Group {
-            if !hasAnyContent {
-                ContentUnavailableView {
-                    Label("没有图纸", systemImage: "square.grid.2x2")
-                } description: {
-                    Text("点击右上角 + 新建第一张图纸")
-                } actions: {
-                    Button("新建图纸") { showNewSheet = true }
-                        .buttonStyle(.borderedProminent)
-                }
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        if !filteredCollectedPatterns.isEmpty {
-                            collectedSection
-                        }
+        VStack(spacing: 0) {
+            Picker("View", selection: $selectedSegment) {
+                Text("我的图纸").tag(0)
+                Text("收藏").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
 
-                        if !filteredPatterns.isEmpty {
-                            editableSection
-                        }
-                    }
-                    .padding(16)
+            Group {
+                if selectedSegment == 0 {
+                    myPatternsContent
+                } else {
+                    FavoritesView(searchText: searchText, onCreateCopy: onSelectPattern)
                 }
-                .searchable(text: $searchText, prompt: "搜索图纸")
             }
         }
-        .navigationTitle("My Patterns")
+        .searchable(text: $searchText, prompt: selectedSegment == 0 ? "搜索我的图纸" : "搜索收藏")
+        .navigationTitle("图纸")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    showScannerSheet = true
+                } label: {
+                    Image(systemName: "qrcode.viewfinder")
+                }
+
                 Menu {
                     Button {
                         showNewSheet = true
                     } label: {
-                        Label("New Pattern", systemImage: "square.and.pencil")
+                        Label("新建图纸", systemImage: "square.and.pencil")
                     }
 
                     Button {
                         showImportSheet = true
                     } label: {
-                        Label("Import from Photos", systemImage: "photo.on.rectangle")
+                        Label("从相册导入", systemImage: "photo.on.rectangle")
                     }
 
                     Button {
                         showScannerSheet = true
                     } label: {
-                        Label("Import from QR Code", systemImage: "qrcode.viewfinder")
+                        Label("扫码加入收藏", systemImage: "qrcode.viewfinder")
                     }
                 } label: {
                     Image(systemName: "plus")
@@ -106,9 +96,12 @@ struct GalleryView: View {
         }
         .sheet(isPresented: $showScannerSheet) {
             NavigationStack {
-                ScannerView {
+                ScannerView(onSavedToGallery: {
                     showScannerSheet = false
-                }
+                }, onFavoriteSaved: { message in
+                    showScannerSheet = false
+                    presentToast(message)
+                })
             }
         }
         .alert("删除图纸", isPresented: $showDeletePatternAlert, presenting: patternToDelete) { pattern in
@@ -119,15 +112,6 @@ struct GalleryView: View {
             Button("取消", role: .cancel) {}
         } message: { pattern in
             Text("确定要删除「\(pattern.name)」吗？此操作无法撤销。")
-        }
-        .alert("移出收藏", isPresented: $showDeleteCollectedAlert, presenting: collectedPatternToDelete) { pattern in
-            Button("移出", role: .destructive) {
-                modelContext.delete(pattern)
-                try? modelContext.save()
-            }
-            Button("取消", role: .cancel) {}
-        } message: { pattern in
-            Text("确定要将「\(pattern.name)」移出外部图纸吗？")
         }
         .alert("导入失败", isPresented: $showImportError) {
             Button("好的", role: .cancel) {}
@@ -146,42 +130,36 @@ struct GalleryView: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) {
+            if showToast, let toastMessage {
+                Text(toastMessage)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
     }
 
-    private var collectedSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("外部图纸")
-                .font(.headline)
-                .padding(.horizontal, 2)
-
-            LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(filteredCollectedPatterns) { pattern in
-                    PatternCardView(
-                        name: pattern.name,
-                        width: pattern.width,
-                        height: pattern.height,
-                        thumbnailData: pattern.thumbnailData,
-                        isCollected: true
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        let copy = duplicate(collected: pattern)
-                        onSelectPattern(copy)
-                    }
-                    .contextMenu {
-                        Button {
-                            let copy = duplicate(collected: pattern)
-                            onSelectPattern(copy)
-                        } label: {
-                            Label("创建副本", systemImage: "doc.on.doc")
-                        }
-                        Button(role: .destructive) {
-                            collectedPatternToDelete = pattern
-                            showDeleteCollectedAlert = true
-                        } label: {
-                            Label("移出外部图纸", systemImage: "bookmark.slash")
-                        }
-                    }
+    private var myPatternsContent: some View {
+        Group {
+            if patterns.isEmpty {
+                ContentUnavailableView {
+                    Label("没有图纸", systemImage: "square.grid.2x2")
+                } description: {
+                    Text("点击右上角 + 新建第一张图纸")
+                } actions: {
+                    Button("新建图纸") { showNewSheet = true }
+                        .buttonStyle(.borderedProminent)
+                }
+            } else if filteredPatterns.isEmpty {
+                ContentUnavailableView.search(text: searchText)
+            } else {
+                ScrollView {
+                    editableSection
+                        .padding(16)
                 }
             }
         }
@@ -189,10 +167,6 @@ struct GalleryView: View {
 
     private var editableSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("我的图纸")
-                .font(.headline)
-                .padding(.horizontal, 2)
-
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(filteredPatterns) { pattern in
                     PatternCardView(
@@ -210,11 +184,6 @@ struct GalleryView: View {
                             onSelectPattern(copy)
                         } label: {
                             Label("复制", systemImage: "doc.on.doc")
-                        }
-                        Button {
-                            addToCollection(pattern)
-                        } label: {
-                            Label("存为外部图纸", systemImage: "bookmark")
                         }
                         Button(role: .destructive) {
                             patternToDelete = pattern
@@ -236,37 +205,6 @@ struct GalleryView: View {
         modelContext.insert(copy)
         try? modelContext.save()
         return copy
-    }
-
-    @discardableResult
-    private func duplicate(collected pattern: CollectedPattern) -> Pattern {
-        let copy = Pattern(name: "\(pattern.name) 副本", width: pattern.width, height: pattern.height)
-        copy.gridData = pattern.gridData
-        copy.thumbnailData = pattern.thumbnailData
-        modelContext.insert(copy)
-        try? modelContext.save()
-        return copy
-    }
-
-    private func addToCollection(_ pattern: Pattern) {
-        guard let signature = try? PatternCodec.collectionSignature(
-            width: pattern.width,
-            height: pattern.height,
-            gridData: pattern.gridData
-        ) else { return }
-
-        guard !collectedPatterns.contains(where: { $0.signature == signature }) else { return }
-
-        let collected = CollectedPattern(
-            name: pattern.name,
-            width: pattern.width,
-            height: pattern.height,
-            gridData: pattern.gridData,
-            thumbnailData: pattern.thumbnailData ?? PatternRenderer.thumbnail(pattern: pattern).pngData(),
-            signature: signature
-        )
-        modelContext.insert(collected)
-        try? modelContext.save()
     }
 
     @MainActor
@@ -296,6 +234,23 @@ struct GalleryView: View {
         } catch {
             importErrorMessage = error.localizedDescription
             showImportError = true
+        }
+    }
+
+    private func presentToast(_ message: String) {
+        toastMessage = message
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            showToast = true
+        }
+
+        Task {
+            try? await Task.sleep(for: .seconds(1.6))
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showToast = false
+                }
+            }
         }
     }
 }

@@ -35,21 +35,34 @@ final class Pattern {
 @Model
 final class CollectedPattern {
     var name: String
+    var author: String
     var width: Int
     var height: Int
     var gridData: [Int]
     var thumbnailData: Data?
     var signature: String
+    var sourceURL: String?
     var createdAt: Date
     var modifiedAt: Date
 
-    init(name: String, width: Int, height: Int, gridData: [Int], thumbnailData: Data?, signature: String) {
+    init(
+        name: String,
+        author: String = "未知作者",
+        width: Int,
+        height: Int,
+        gridData: [Int],
+        thumbnailData: Data?,
+        signature: String,
+        sourceURL: String? = nil
+    ) {
         self.name = name
+        self.author = author
         self.width = width
         self.height = height
         self.gridData = gridData
         self.thumbnailData = thumbnailData
         self.signature = signature
+        self.sourceURL = sourceURL
         self.createdAt = Date()
         self.modifiedAt = Date()
     }

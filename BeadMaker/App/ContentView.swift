@@ -3,6 +3,7 @@ import SwiftData
 
 struct ContentView: View {
     @Query(sort: \Pattern.modifiedAt, order: .reverse) private var patterns: [Pattern]
+    @Query(sort: \CollectedPattern.modifiedAt, order: .reverse) private var collectedPatterns: [CollectedPattern]
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
     @AppStorage(AppConstants.appleUserIDKey) private var appleUserID = ""
@@ -67,6 +68,20 @@ struct ContentView: View {
         for pattern in patterns {
             if pattern.thumbnailData == nil {
                 pattern.thumbnailData = PatternRenderer.thumbnail(pattern: pattern).pngData()
+                didChange = true
+            }
+        }
+
+        for favorite in collectedPatterns {
+            if favorite.thumbnailData == nil {
+                let preview = Pattern(name: favorite.name, width: favorite.width, height: favorite.height)
+                preview.gridData = favorite.gridData
+                favorite.thumbnailData = PatternRenderer.thumbnail(pattern: preview).pngData()
+                didChange = true
+            }
+
+            if favorite.author.isEmpty {
+                favorite.author = "未知作者"
                 didChange = true
             }
         }
