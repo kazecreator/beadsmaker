@@ -32,6 +32,12 @@ struct ContentView: View {
             .tag(1)
             .tabItem { Label("Marketplace", systemImage: "bag.fill") }
 
+            NavigationStack {
+                ProfileView()
+            }
+            .tag(2)
+            .tabItem { Label("Profile", systemImage: "person.crop.circle") }
+
             if isAdmin {
                 NavigationStack {
                     ModerationView()
@@ -39,12 +45,6 @@ struct ContentView: View {
                 .tag(3)
                 .tabItem { Label("Moderation", systemImage: "checkmark.shield") }
             }
-
-            NavigationStack {
-                ProfileView()
-            }
-            .tag(2)
-            .tabItem { Label("Profile", systemImage: "person.crop.circle") }
         }
         .onAppear {
             repairStoredData()
