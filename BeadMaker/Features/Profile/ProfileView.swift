@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AuthenticationServices
 
 struct ProfileView: View {
     @Query private var profiles: [UserProfile]
@@ -9,8 +10,6 @@ struct ProfileView: View {
     @State private var showAvatarPicker = false
     @State private var showNicknameAlert = false
     @State private var pendingNickname = ""
-    @State private var tokenValidationState: GitHubTokenValidationState = .idle
-    @State private var tokenValidationTask: Task<Void, Never>?
 
     private var profile: UserProfile? { profiles.first }
 
@@ -23,9 +22,6 @@ struct ProfileView: View {
             }
         }
         .navigationTitle("我的")
-        .onDisappear {
-            tokenValidationTask?.cancel()
-        }
     }
 
     @ViewBuilder
@@ -78,17 +74,25 @@ struct ProfileView: View {
                 }
             }
 
-            Section("Marketplace") {
-                TextField("GitHub Token", text: githubTokenBinding(for: profile), axis: .vertical)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .privacySensitive()
+            Section("账户") {
+                SignInWithAppleButton(.signIn) { request in
+                    request.requestedScopes = [.fullName]
+                } onCompletion: { result in
+                    handleSignInWithApple(result: result)
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 44)
 
-                tokenValidationStatusView(for: profile)
-
-                Text("用于提交图纸到 Marketplace 审核。请填写 GitHub Personal Access Token。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if profile.isAdmin {
+                    Label("Admin", systemImage: "checkmark.shield.fill")
+                        .font(.caption.weight(.bold))
+                        .labelStyle(.titleAndIcon)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.accentColor.opacity(0.15))
+                        .foregroundStyle(Color.accentColor)
+                        .clipShape(Capsule())
+                }
             }
         }
         .sheet(isPresented: $showAvatarPicker) {
@@ -102,12 +106,6 @@ struct ProfileView: View {
                 try? modelContext.save()
             }
             Button("取消", role: .cancel) {}
-        }
-        .task {
-            syncTokenValidationState(for: profile)
-            if profile.trimmedGitHubToken != nil, profile.githubUsername == nil {
-                scheduleTokenValidation(for: profile)
-            }
         }
     }
 
@@ -135,102 +133,15 @@ struct ProfileView: View {
         patterns.reduce(0) { total, p in total + p.gridData.filter { $0 != 0 }.count }
     }
 
-    private func githubTokenBinding(for profile: UserProfile) -> Binding<String> {
-        Binding(
-            get: { profile.githubToken ?? "" },
-            set: { newValue in
-                profile.githubToken = newValue.isEmpty ? nil : newValue
-                try? modelContext.save()
-                scheduleTokenValidation(for: profile)
+    private func handleSignInWithApple(result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
+                let userIdentifier = appleIDCredential.user
+                UserDefaults.standard.set(userIdentifier, forKey: AppConstants.appleUserIDKey)
             }
-        )
-    }
-
-    @ViewBuilder
-    private func tokenValidationStatusView(for profile: UserProfile) -> some View {
-        switch tokenValidationState {
-        case .idle:
-            if let username = profile.githubUsername, !username.isEmpty {
-                usernameStatusView(username: username, isAdmin: profile.isAdmin)
-            }
-        case .validating:
-            HStack(spacing: 8) {
-                ProgressView()
-                    .controlSize(.small)
-                Text("正在验证 GitHub Token…")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        case .valid(let username):
-            usernameStatusView(username: username, isAdmin: profile.isAdmin)
-        case .invalid:
-            Text("Invalid token")
-                .font(.caption)
-                .foregroundStyle(.red)
-        }
-    }
-
-    private func usernameStatusView(username: String, isAdmin: Bool) -> some View {
-        HStack(spacing: 6) {
-            Text(username)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            if isAdmin {
-                Label("Admin", systemImage: "checkmark.shield.fill")
-                    .font(.caption2.weight(.bold))
-                    .labelStyle(.titleAndIcon)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.accentColor.opacity(0.15))
-                    .foregroundStyle(Color.accentColor)
-                    .clipShape(Capsule())
-            }
-        }
-    }
-
-    private func syncTokenValidationState(for profile: UserProfile) {
-        if let username = profile.githubUsername, !username.isEmpty {
-            tokenValidationState = .valid(username)
-        } else if profile.trimmedGitHubToken == nil {
-            tokenValidationState = .idle
-        }
-    }
-
-    private func scheduleTokenValidation(for profile: UserProfile) {
-        tokenValidationTask?.cancel()
-
-        guard let token = profile.trimmedGitHubToken else {
-            profile.githubUsername = nil
-            tokenValidationState = .idle
-            try? modelContext.save()
-            return
-        }
-
-        tokenValidationState = .validating
-        tokenValidationTask = Task {
-            try? await Task.sleep(for: .milliseconds(450))
-            guard !Task.isCancelled else { return }
-
-            do {
-                let user = try await GitHubAPIClient().fetchAuthenticatedUser(token: token)
-                guard !Task.isCancelled else { return }
-
-                await MainActor.run {
-                    guard profile.trimmedGitHubToken == token else { return }
-                    profile.githubUsername = user.login
-                    tokenValidationState = .valid(user.login)
-                    try? modelContext.save()
-                }
-            } catch {
-                guard !Task.isCancelled else { return }
-
-                await MainActor.run {
-                    guard profile.trimmedGitHubToken == token else { return }
-                    profile.githubUsername = nil
-                    tokenValidationState = .invalid
-                    try? modelContext.save()
-                }
-            }
+        case .failure(let error):
+            print("Sign in with Apple failed: \(error.localizedDescription)")
         }
     }
 
@@ -239,11 +150,4 @@ struct ProfileView: View {
         modelContext.insert(p)
         try? modelContext.save()
     }
-}
-
-private enum GitHubTokenValidationState: Equatable {
-    case idle
-    case validating
-    case valid(String)
-    case invalid
 }
