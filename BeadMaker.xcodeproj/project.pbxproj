@@ -20,6 +20,7 @@
 		655995585E68BA92283F2774 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */; };
 		68580270A31054AA0D207B0C /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F4E5CAD01B742F40B44253 /* ScannerView.swift */; };
 		73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3759C901E3220642F397C3A3 /* GalleryView.swift */; };
+		7B31A1FD54B84B6E9C1A3F22 /* MarketplaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */; };
 		8C02B7C6573D4D44564EC1BA /* PatternCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA537975C118C395CEDB0048 /* PatternCodec.swift */; };
 		92EFA5FFAE57DD6E06BA9B78 /* BeadMakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FAD33B73DF973D67636031 /* BeadMakerApp.swift */; };
 		9595F7A55E53BB7B83363452 /* PatternCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8ECA38224DCB526054DF93 /* PatternCardView.swift */; };
@@ -46,6 +47,7 @@
 		70E146955A1062679618E3C6 /* Pattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pattern.swift; sourceTree = "<group>"; };
 		76F4E5CAD01B742F40B44253 /* ScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
 		77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
+		7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceView.swift; sourceTree = "<group>"; };
 		7EC2C881CF99568D17E91EAA /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
 		8226AD744345945D49F18CD7 /* BeadMaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeadMaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A3E6A57B424740278A012E1 /* BeadColorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadColorLibrary.swift; sourceTree = "<group>"; };
@@ -113,11 +115,20 @@
 			path = Scanner;
 			sourceTree = "<group>";
 		};
+		7B31A1FD54B84B6E9C1A3F20 /* Marketplace */ = {
+			isa = PBXGroup;
+			children = (
+				7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */,
+			);
+			path = Marketplace;
+			sourceTree = "<group>";
+		};
 		9B29E3C6584EB06519C92E6C /* Features */ = {
 			isa = PBXGroup;
 			children = (
 				66F22D9E4158170854A6FE50 /* Editor */,
 				E5AD40D1E3E1FC88B5203062 /* Gallery */,
+				7B31A1FD54B84B6E9C1A3F20 /* Marketplace */,
 				228E21DB4E542B14BB33D39E /* Profile */,
 				94CC86C690134E6D67D585D6 /* Scanner */,
 				D3068A16821EC9E418FA9EA9 /* Share */,
@@ -252,6 +263,7 @@
 				A777EF6764D76F2BDB07F004 /* EditorViewModel.swift in Sources */,
 				73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */,
 				2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */,
+				7B31A1FD54B84B6E9C1A3F22 /* MarketplaceView.swift in Sources */,
 				DCA0AA6F1C5A3B4666E07FA5 /* Pattern.swift in Sources */,
 				9595F7A55E53BB7B83363452 /* PatternCardView.swift in Sources */,
 				8C02B7C6573D4D44564EC1BA /* PatternCodec.swift in Sources */,

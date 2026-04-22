@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
+import UIKit
 
 struct GalleryView: View {
     @Query(sort: \Pattern.modifiedAt, order: .reverse) private var patterns: [Pattern]
@@ -13,6 +15,10 @@ struct GalleryView: View {
     @State private var collectedPatternToDelete: CollectedPattern?
     @State private var showDeletePatternAlert = false
     @State private var showDeleteCollectedAlert = false
+    @State private var showImportSheet = false
+    @State private var importErrorMessage = ""
+    @State private var showImportError = false
+    @State private var isImportingPhoto = false
 
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 16)]
 
@@ -55,10 +61,22 @@ struct GalleryView: View {
                 .searchable(text: $searchText, prompt: "搜索图纸")
             }
         }
-        .navigationTitle("我的图纸")
+        .navigationTitle("My Patterns")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { showNewSheet = true } label: {
+                Menu {
+                    Button {
+                        showNewSheet = true
+                    } label: {
+                        Label("New Pattern", systemImage: "square.and.pencil")
+                    }
+
+                    Button {
+                        showImportSheet = true
+                    } label: {
+                        Label("Import from Photos", systemImage: "photo.on.rectangle")
+                    }
+                } label: {
                     Image(systemName: "plus")
                 }
             }
@@ -70,6 +88,13 @@ struct GalleryView: View {
                 try? modelContext.save()
                 showNewSheet = false
                 onSelectPattern(pattern)
+            }
+        }
+        .sheet(isPresented: $showImportSheet) {
+            ImportPatternSheet { name, width, height, item in
+                Task {
+                    await importPhoto(item, name: name, width: width, height: height)
+                }
             }
         }
         .alert("删除图纸", isPresented: $showDeletePatternAlert, presenting: patternToDelete) { pattern in
@@ -89,6 +114,23 @@ struct GalleryView: View {
             Button("取消", role: .cancel) {}
         } message: { pattern in
             Text("确定要将「\(pattern.name)」移出外部图纸吗？")
+        }
+        .alert("导入失败", isPresented: $showImportError) {
+            Button("好的", role: .cancel) {}
+        } message: {
+            Text(importErrorMessage)
+        }
+        .overlay {
+            if isImportingPhoto {
+                ZStack {
+                    Color.black.opacity(0.18)
+                        .ignoresSafeArea()
+                    ProgressView("正在导入照片…")
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 18)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+            }
         }
     }
 
@@ -212,6 +254,36 @@ struct GalleryView: View {
         modelContext.insert(collected)
         try? modelContext.save()
     }
+
+    @MainActor
+    private func importPhoto(_ item: PhotosPickerItem, name: String, width: Int, height: Int) async {
+        isImportingPhoto = true
+        defer { isImportingPhoto = false }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else {
+                throw ImageImporterError.invalidImage
+            }
+
+            let gridData = try ImageImporter.makePattern(
+                from: image,
+                targetWidth: width,
+                targetHeight: height
+            )
+
+            let pattern = Pattern(name: name, width: width, height: height)
+            pattern.gridData = gridData
+            pattern.thumbnailData = PatternRenderer.thumbnail(pattern: pattern).pngData()
+
+            modelContext.insert(pattern)
+            try? modelContext.save()
+            onSelectPattern(pattern)
+        } catch {
+            importErrorMessage = error.localizedDescription
+            showImportError = true
+        }
+    }
 }
 
 private struct NewPatternSheet: View {
@@ -271,6 +343,74 @@ private struct NewPatternSheet: View {
                     .bold()
                 }
             }
+        }
+    }
+}
+
+private struct ImportPatternSheet: View {
+    var onImport: (String, Int, Int, PhotosPickerItem) -> Void
+
+    @State private var name = "照片导入"
+    @State private var selectedPreset = 1
+    @State private var customWidth = 20
+    @State private var customHeight = 20
+    @State private var selectedPhoto: PhotosPickerItem?
+    @Environment(\.dismiss) private var dismiss
+
+    private let presets: [(String, Int, Int)] = [
+        ("小方板 15×15", 15, 15),
+        ("大方板 29×29", 29, 29),
+        ("自定义", 0, 0),
+    ]
+
+    private var width: Int { selectedPreset == 2 ? customWidth : presets[selectedPreset].1 }
+    private var height: Int { selectedPreset == 2 ? customHeight : presets[selectedPreset].2 }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("图纸名称") {
+                    TextField("名称", text: $name)
+                }
+
+                Section("尺寸") {
+                    Picker("板型", selection: $selectedPreset) {
+                        ForEach(0..<presets.count, id: \.self) { index in
+                            Text(presets[index].0).tag(index)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if selectedPreset == 2 {
+                        Stepper("宽度：\(customWidth)", value: $customWidth, in: 5...100)
+                        Stepper("高度：\(customHeight)", value: $customHeight, in: 5...100)
+                    }
+                }
+
+                Section {
+                    Text("画布大小：\(width) × \(height) = \(width * height) 颗")
+                        .foregroundStyle(.secondary)
+                }
+
+                Section {
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        Label("选择照片", systemImage: "photo.on.rectangle")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                }
+            }
+            .navigationTitle("Import from Photos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { dismiss() }
+                }
+            }
+        }
+        .onChange(of: selectedPhoto) { _, item in
+            guard let item else { return }
+            onImport(name.isEmpty ? "照片导入" : name, width, height, item)
+            dismiss()
         }
     }
 }
