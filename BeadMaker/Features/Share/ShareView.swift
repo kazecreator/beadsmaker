@@ -313,10 +313,11 @@ private struct MarketplaceSubmissionSheet: View {
 
     @MainActor
     private func submit() async {
-        guard let token = profile?.trimmedGitHubToken else {
+        let token = UserDefaults.standard.string(forKey: AppConstants.githubPATKey)
+        guard let token, !token.isEmpty else {
             presentAlert(
-                title: "未配置 GitHub Token",
-                message: "请前往 Profile 页配置 GitHub Token 后再提交。",
+                title: "Marketplace 不可用",
+                message: "Marketplace 投稿功能仅对管理员开放。",
                 dismissAfterAlert: false
             )
             return
