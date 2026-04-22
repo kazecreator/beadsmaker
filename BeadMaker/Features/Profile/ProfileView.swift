@@ -72,6 +72,17 @@ struct ProfileView: View {
                     Button("更换") { showAvatarPicker = true }
                 }
             }
+
+            Section("Marketplace") {
+                TextField("GitHub Token", text: githubTokenBinding(for: profile), axis: .vertical)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .privacySensitive()
+
+                Text("用于提交图纸到 Marketplace 审核。请填写 GitHub Personal Access Token。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .sheet(isPresented: $showAvatarPicker) {
             AvatarPickerView(profile: profile)
@@ -109,6 +120,16 @@ struct ProfileView: View {
 
     private var totalBeads: Int {
         patterns.reduce(0) { total, p in total + p.gridData.filter { $0 != 0 }.count }
+    }
+
+    private func githubTokenBinding(for profile: UserProfile) -> Binding<String> {
+        Binding(
+            get: { profile.githubToken ?? "" },
+            set: { newValue in
+                profile.githubToken = newValue.isEmpty ? nil : newValue
+                try? modelContext.save()
+            }
+        )
     }
 
     private func createProfile() {

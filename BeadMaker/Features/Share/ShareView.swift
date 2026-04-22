@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ShareView: View {
     let pattern: Pattern
@@ -9,9 +10,16 @@ struct ShareView: View {
     @State private var showSavedAlert = false
     @State private var savedMessage = ""
     @State private var showShareSheet = false
+    @State private var showMarketplaceSheet = false
     @State private var shareItems: [Any] = []
 
     private var profile: UserProfile? { profiles.first }
+    private var thumbnailPreview: UIImage {
+        if let data = pattern.thumbnailData, let image = UIImage(data: data) {
+            return image
+        }
+        return PatternRenderer.thumbnail(pattern: pattern)
+    }
 
     var body: some View {
         NavigationStack {
@@ -62,6 +70,35 @@ struct ShareView: View {
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                    VStack(spacing: 12) {
+                        Text("提交到 Marketplace").font(.headline)
+                        Image(uiImage: thumbnailPreview)
+                            .resizable()
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(maxHeight: 160)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                        Button {
+                            showMarketplaceSheet = true
+                        } label: {
+                            Label("Submit to Marketplace", systemImage: "paperplane.fill")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.accentColor)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+
+                        Text("通过 GitHub Issue 提交图纸，等待 Marketplace 审核。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .padding()
             }
@@ -78,6 +115,13 @@ struct ShareView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 ActivityView(items: shareItems)
+            }
+            .sheet(isPresented: $showMarketplaceSheet) {
+                MarketplaceSubmissionSheet(
+                    pattern: pattern,
+                    profile: profile,
+                    previewImage: thumbnailPreview
+                )
             }
             .alert(savedMessage, isPresented: $showSavedAlert) {
                 Button("好的", role: .cancel) {}
@@ -152,4 +196,257 @@ struct ActivityView: UIViewControllerRepresentable {
         UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
     func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
+
+private struct MarketplaceSubmissionSheet: View {
+    let pattern: Pattern
+    let profile: UserProfile?
+    let previewImage: UIImage
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var patternName: String
+    @State private var authorName: String
+    @State private var description: String
+    @State private var isSubmitting = false
+    @State private var showResultAlert = false
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
+    @State private var dismissAfterAlert = false
+
+    init(pattern: Pattern, profile: UserProfile?, previewImage: UIImage) {
+        self.pattern = pattern
+        self.profile = profile
+        self.previewImage = previewImage
+        _patternName = State(initialValue: pattern.name)
+        _authorName = State(initialValue: profile?.nickname ?? "")
+        _description = State(initialValue: "")
+    }
+
+    private var trimmedPatternName: String {
+        patternName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedAuthorName: String {
+        authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedDescription: String {
+        description.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canSubmit: Bool {
+        !trimmedPatternName.isEmpty && !trimmedAuthorName.isEmpty && !isSubmitting
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Submission") {
+                    TextField("Pattern name", text: $patternName)
+                    TextField("Author name", text: $authorName)
+                    TextField("Description (optional)", text: $description, axis: .vertical)
+                        .lineLimit(4, reservesSpace: true)
+                        .onChange(of: description) { _, newValue in
+                            if newValue.count > 200 {
+                                description = String(newValue.prefix(200))
+                            }
+                        }
+
+                    HStack {
+                        Spacer()
+                        Text("\(description.count)/200")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Preview") {
+                    HStack {
+                        Spacer()
+                        Image(uiImage: previewImage)
+                            .resizable()
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(maxWidth: 220, maxHeight: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        Spacer()
+                    }
+                }
+
+                Section {
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if isSubmitting {
+                                ProgressView()
+                                    .padding(.trailing, 6)
+                            }
+                            Text(isSubmitting ? "Submitting…" : "Submit")
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
+                    }
+                    .disabled(!canSubmit)
+                }
+            }
+            .navigationTitle("Submit to Marketplace")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .alert(alertTitle, isPresented: $showResultAlert) {
+                Button(dismissAfterAlert ? "好的" : "关闭", role: .cancel) {
+                    if dismissAfterAlert {
+                        dismiss()
+                    }
+                }
+            } message: {
+                Text(alertMessage)
+            }
+        }
+    }
+
+    @MainActor
+    private func submit() async {
+        guard let token = profile?.trimmedGitHubToken else {
+            presentAlert(
+                title: "未配置 GitHub Token",
+                message: "请前往 Profile 页配置 GitHub Token 后再提交。",
+                dismissAfterAlert: false
+            )
+            return
+        }
+
+        isSubmitting = true
+        defer { isSubmitting = false }
+
+        do {
+            let submissionPattern = Pattern(name: trimmedPatternName, width: pattern.width, height: pattern.height)
+            submissionPattern.gridData = pattern.gridData
+            submissionPattern.thumbnailData = pattern.thumbnailData
+
+            let data = try PatternCodec.encode(pattern: submissionPattern)
+            guard let patternJSON = String(data: data, encoding: .utf8) else {
+                throw MarketplaceSubmissionError.invalidPatternJSON
+            }
+
+            try await MarketplaceSubmissionClient().submit(
+                token: token,
+                patternName: trimmedPatternName,
+                author: trimmedAuthorName,
+                description: trimmedDescription,
+                patternJSON: patternJSON
+            )
+
+            presentAlert(
+                title: "提交成功",
+                message: "图纸已提交到 Marketplace 审核队列。",
+                dismissAfterAlert: true
+            )
+        } catch {
+            presentAlert(
+                title: "提交失败",
+                message: error.localizedDescription,
+                dismissAfterAlert: false
+            )
+        }
+    }
+
+    private func presentAlert(title: String, message: String, dismissAfterAlert: Bool) {
+        alertTitle = title
+        alertMessage = message
+        self.dismissAfterAlert = dismissAfterAlert
+        showResultAlert = true
+    }
+}
+
+private struct MarketplaceSubmissionClient {
+    func submit(token: String, patternName: String, author: String, description: String, patternJSON: String) async throws {
+        let endpoint = URL(string: "https://api.github.com/repos/kazecreator/bead-maker/issues")!
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("BeadMaker", forHTTPHeaderField: "User-Agent")
+        request.httpBody = try JSONEncoder().encode(
+            GitHubIssueRequest(
+                title: "[Marketplace Submission] \(patternName) by \(author)",
+                body: issueBody(description: description, patternJSON: patternJSON),
+                labels: ["marketplace-submission"]
+            )
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw MarketplaceSubmissionError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 201 else {
+            if let githubError = try? JSONDecoder().decode(GitHubIssueErrorResponse.self, from: data),
+               let message = githubError.combinedMessage {
+                throw MarketplaceSubmissionError.server(message)
+            }
+            throw MarketplaceSubmissionError.server("GitHub 返回了状态码 \(httpResponse.statusCode)。")
+        }
+    }
+
+    private func issueBody(description: String, patternJSON: String) -> String {
+        let descriptionText = description.isEmpty ? "No description provided." : description
+        return """
+        Description:
+        \(descriptionText)
+
+        Pattern JSON:
+        ```json
+        \(patternJSON)
+        ```
+        """
+    }
+}
+
+private struct GitHubIssueRequest: Encodable {
+    let title: String
+    let body: String
+    let labels: [String]
+}
+
+private struct GitHubIssueErrorResponse: Decodable {
+    let message: String
+    let errors: [GitHubIssueErrorDetail]?
+
+    var combinedMessage: String? {
+        let details = errors?.compactMap(\.message).joined(separator: "\n")
+        if let details, !details.isEmpty {
+            return "\(message)\n\(details)"
+        }
+        return message
+    }
+}
+
+private struct GitHubIssueErrorDetail: Decodable {
+    let message: String?
+}
+
+private enum MarketplaceSubmissionError: LocalizedError {
+    case invalidPatternJSON
+    case invalidResponse
+    case server(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidPatternJSON:
+            return "图纸 JSON 编码失败，请稍后再试。"
+        case .invalidResponse:
+            return "未收到有效的 GitHub 响应。"
+        case .server(let message):
+            return message
+        }
+    }
 }
