@@ -608,8 +608,8 @@ private enum ModerationPreviewRenderer {
             return htmlColors[index]
         }
 
-        if let bead = BeadColorLibrary.color(id: index), let color = UIColor(hex: bead.hex) {
-            return color
+        if let bead = BeadColorLibrary.color(id: index) {
+            return UIColor(hex: bead.hex)
         }
 
         return .white
