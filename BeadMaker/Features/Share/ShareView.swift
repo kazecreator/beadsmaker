@@ -318,7 +318,7 @@ private struct MarketplaceSubmissionSheet: View {
         guard !token.isEmpty else {
             presentAlert(
                 title: "Marketplace 不可用",
-                message: "Marketplace 投稿功能仅对管理员开放。",
+                message: "此构建需要先在设备上配置 GitHub PAT，才能向私有仓库提交 Marketplace 投稿。",
                 dismissAfterAlert: false
             )
             return

@@ -5,11 +5,12 @@ struct ContentView: View {
     @Query(sort: \Pattern.modifiedAt, order: .reverse) private var patterns: [Pattern]
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    @AppStorage(AppConstants.appleUserIDKey) private var appleUserID = ""
     @State private var editorRoute: EditorRoute?
     @State private var selectedTab = 0
 
     private var isAdmin: Bool {
-        profiles.first?.isAdmin == true
+        !appleUserID.isEmpty && appleUserID == AppConstants.adminAppleID
     }
 
     var body: some View {

@@ -16,6 +16,7 @@ struct GalleryView: View {
     @State private var showDeletePatternAlert = false
     @State private var showDeleteCollectedAlert = false
     @State private var showImportSheet = false
+    @State private var showScannerSheet = false
     @State private var importErrorMessage = ""
     @State private var showImportError = false
     @State private var isImportingPhoto = false
@@ -76,6 +77,12 @@ struct GalleryView: View {
                     } label: {
                         Label("Import from Photos", systemImage: "photo.on.rectangle")
                     }
+
+                    Button {
+                        showScannerSheet = true
+                    } label: {
+                        Label("Import from QR Code", systemImage: "qrcode.viewfinder")
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -94,6 +101,13 @@ struct GalleryView: View {
             ImportPatternSheet { name, width, height, item in
                 Task {
                     await importPhoto(item, name: name, width: width, height: height)
+                }
+            }
+        }
+        .sheet(isPresented: $showScannerSheet) {
+            NavigationStack {
+                ScannerView {
+                    showScannerSheet = false
                 }
             }
         }

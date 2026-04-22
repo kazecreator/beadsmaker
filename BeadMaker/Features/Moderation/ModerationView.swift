@@ -7,9 +7,12 @@ struct ModerationView: View {
     @StateObject private var viewModel = ModerationViewModel()
     @State private var patInput: String = ""
     @AppStorage(AppConstants.githubPATKey) private var githubPAT = ""
+    @AppStorage(AppConstants.appleUserIDKey) private var appleUserID = ""
 
     private var profile: UserProfile? { profiles.first }
-    private var isAdmin: Bool { profile?.isAdmin == true }
+    private var isAdmin: Bool {
+        (profile != nil) && !appleUserID.isEmpty && appleUserID == AppConstants.adminAppleID
+    }
 
     private var storedPat: String? {
         let trimmed = githubPAT.trimmingCharacters(in: .whitespacesAndNewlines)

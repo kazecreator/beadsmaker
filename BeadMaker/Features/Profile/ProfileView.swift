@@ -6,12 +6,16 @@ struct ProfileView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \Pattern.modifiedAt, order: .reverse) private var patterns: [Pattern]
     @Environment(\.modelContext) private var modelContext
+    @AppStorage(AppConstants.appleUserIDKey) private var appleUserID = ""
 
     @State private var showAvatarPicker = false
     @State private var showNicknameAlert = false
     @State private var pendingNickname = ""
 
     private var profile: UserProfile? { profiles.first }
+    private var isAdmin: Bool {
+        !appleUserID.isEmpty && appleUserID == AppConstants.adminAppleID
+    }
 
     var body: some View {
         Group {
@@ -83,7 +87,7 @@ struct ProfileView: View {
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 44)
 
-                if profile.isAdmin {
+                if isAdmin {
                     Label("Admin", systemImage: "checkmark.shield.fill")
                         .font(.caption.weight(.bold))
                         .labelStyle(.titleAndIcon)
@@ -138,7 +142,7 @@ struct ProfileView: View {
         case .success(let authorization):
             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
                 let userIdentifier = appleIDCredential.user
-                UserDefaults.standard.set(userIdentifier, forKey: AppConstants.appleUserIDKey)
+                appleUserID = userIdentifier
             }
         case .failure(let error):
             print("Sign in with Apple failed: \(error.localizedDescription)")
