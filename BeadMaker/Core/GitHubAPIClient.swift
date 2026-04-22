@@ -1,5 +1,12 @@
 import Foundation
 
+enum AppConstants {
+    // Replace with kazecreator's Apple ID userIdentifier from Apple Developer console
+    static let adminAppleID: String = "REPLACE_WITH_YOUR_APPLE_ID"
+    static let githubPATKey: String = "beadmaker_admin_github_pat"
+    static let appleUserIDKey: String = "beadmaker_apple_user_id"
+}
+
 struct GitHubAPIClient {
     private let baseURL = URL(string: "https://api.github.com")!
 

@@ -7,26 +7,20 @@ final class UserProfile {
     var avatarType: String      // "preset" | "pattern"
     var presetAvatarIndex: Int
     var customAvatarData: Data? // PNG of selected avatar (from pattern thumbnail)
-    var githubToken: String?
-    var githubUsername: String?
 
     init() {
         self.nickname = "拼豆玩家"
         self.avatarType = "preset"
         self.presetAvatarIndex = 0
-        self.githubToken = nil
-        self.githubUsername = nil
     }
 
     var isPreset: Bool { avatarType == "preset" }
 
-    var isAdmin: Bool { githubUsername == "kazeCreator" }
-
-    var trimmedGitHubToken: String? {
-        guard let token = githubToken?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
-            return nil
+    var isAdmin: Bool {
+        guard let storedAppleID = UserDefaults.standard.string(forKey: AppConstants.appleUserIDKey) else {
+            return false
         }
-        return token
+        return storedAppleID == AppConstants.adminAppleID
     }
 
     var avatarImage: UIImage? {
