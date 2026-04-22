@@ -1,0 +1,37 @@
+name: BeadMaker
+options:
+  bundleIdPrefix: com.kevinzhang
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+
+targets:
+  BeadMaker:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BeadMaker
+    info:
+      path: BeadMaker/Info.plist
+      properties:
+        CFBundleDisplayName: 拼豆图纸
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        NSCameraUsageDescription: 需要相机权限来扫描图纸二维码
+        NSPhotoLibraryAddUsageDescription: 需要相册权限来保存二维码图片
+        NSPhotoLibraryUsageDescription: 需要相册权限来读取二维码图片
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.beadmaker
+        DEVELOPMENT_TEAM: XC7WXFBUET
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        ENABLE_PREVIEWS: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
