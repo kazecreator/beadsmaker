@@ -8,9 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		023565E9BDC30D84BE170484 /* ToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FD229C4540444E06749C9A /* ToolbarView.swift */; };
+		0263A8FA83A1E67AF4EB8E9A /* BeadEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */; };
 		04B9547CB4D06BDDA831CC56 /* ColorPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2C6F0503AA5638B5600387 /* ColorPanelView.swift */; };
 		0E2AFA6A9CC63434818A7194 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F4582FBE525393C0400B87 /* QRGeneratorView.swift */; };
 		256097CAC28F5AC15D7B9E86 /* PatternRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */; };
+		3144493D689238C4F4E70D5C /* IroningAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */; };
+		39B499D93A3A682C7D7F442A /* IronedPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E93392194EF79293D0E392E /* IronedPatternView.swift */; };
 		2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F2E215D26C4581BA636E18 /* ImageImporter.swift */; };
 		451D1B4A53F7D9480B83E56B /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691B718223BB738AD7A48FBE /* ShareView.swift */; };
 		492C0D1B4E8D4C6FA4C71234 /* GitHubAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492C0D1B4E8D4C6FA4C71233 /* GitHubAPIClient.swift */; };
@@ -42,6 +45,9 @@
 		1D8ECA38224DCB526054DF93 /* PatternCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternCardView.swift; sourceTree = "<group>"; };
 		31F2E215D26C4581BA636E18 /* ImageImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageImporter.swift; sourceTree = "<group>"; };
 		3759C901E3220642F397C3A3 /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
+		4E93392194EF79293D0E392E /* IronedPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronedPatternView.swift; sourceTree = "<group>"; };
+		4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadEditorView.swift; sourceTree = "<group>"; };
+		52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IroningAnimationView.swift; sourceTree = "<group>"; };
 		40D2EA2622B2B262E7344B52 /* BeadColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadColor.swift; sourceTree = "<group>"; };
 		492C0D1B4E8D4C6FA4C71233 /* GitHubAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubAPIClient.swift; sourceTree = "<group>"; };
 		5939A0E0C5A18D6E580EAEE7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -89,11 +95,14 @@
 		66F22D9E4158170854A6FE50 /* Editor */ = {
 			isa = PBXGroup;
 			children = (
+				4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */,
 				9E31BFFC344F44F301C66895 /* BeadStatsView.swift */,
 				77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */,
 				CB2C6F0503AA5638B5600387 /* ColorPanelView.swift */,
 				AB391409A9B3001C51FD997F /* EditorView.swift */,
 				7EC2C881CF99568D17E91EAA /* EditorViewModel.swift */,
+				4E93392194EF79293D0E392E /* IronedPatternView.swift */,
+				52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */,
 				98FD229C4540444E06749C9A /* ToolbarView.swift */,
 			);
 			path = Editor;
@@ -266,6 +275,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0263A8FA83A1E67AF4EB8E9A /* BeadEditorView.swift in Sources */,
 				4F95D21645D6E4031678FBFF /* AvatarPickerView.swift in Sources */,
 				492C0D1B4E8D4C6FA4C71234 /* GitHubAPIClient.swift in Sources */,
 				B81248C17611C7D246FA5A2B /* BeadColor.swift in Sources */,
@@ -279,6 +289,8 @@
 				A777EF6764D76F2BDB07F004 /* EditorViewModel.swift in Sources */,
 				73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */,
 				2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */,
+				39B499D93A3A682C7D7F442A /* IronedPatternView.swift in Sources */,
+				3144493D689238C4F4E70D5C /* IroningAnimationView.swift in Sources */,
 				7B31A1FD54B84B6E9C1A3F22 /* MarketplaceView.swift in Sources */,
 				58F4891B916B47B8B6A051AB /* ModerationView.swift in Sources */,
 				DCA0AA6F1C5A3B4666E07FA5 /* Pattern.swift in Sources */,

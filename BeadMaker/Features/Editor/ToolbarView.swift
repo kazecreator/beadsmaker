@@ -4,6 +4,7 @@ struct ToolbarView: View {
     var viewModel: EditorViewModel
     let onUndo: () -> Void
     let onRedo: () -> Void
+    let onComplete: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
@@ -52,6 +53,16 @@ struct ToolbarView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.trailing, 4)
+            }
+
+            Button(action: onComplete) {
+                Label("完成", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.accentColor.opacity(0.12))
+                    .clipShape(Capsule())
             }
         }
     }
