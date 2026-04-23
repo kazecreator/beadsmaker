@@ -22,6 +22,14 @@ final class AppSessionStore: ObservableObject {
         }
     }
 
+    func isHandleAvailable(_ handle: String) -> Bool {
+        userService.isHandleAvailable(handle, excluding: currentUser)
+    }
+
+    func updateDisplayName(_ displayName: String) {
+        currentUser = userService.updateDisplayName(displayName, for: currentUser)
+    }
+
     func updateAvatar(_ avatar: Avatar) {
         currentUser = userService.updateAvatar(avatar, for: currentUser)
     }
@@ -54,6 +62,14 @@ final class ExploreStore: ObservableObject {
     func toggleSave(_ pattern: Pattern, user: User) {
         savedPatternIDs = communityService.toggleSave(pattern: pattern, for: user)
     }
+
+    func isLiked(_ pattern: Pattern) -> Bool {
+        likedPatternIDs.contains(pattern.id)
+    }
+
+    func isSaved(_ pattern: Pattern) -> Bool {
+        savedPatternIDs.contains(pattern.id)
+    }
 }
 
 @MainActor
@@ -67,6 +83,8 @@ final class CreateStore: ObservableObject {
     private let exportService: ExportService
     private var undoStack: [Pattern] = []
     private var redoStack: [Pattern] = []
+    private var activeStrokeCells: Set<String> = []
+    private var hasActiveStroke = false
 
     init(patternService: PatternService, exportService: ExportService, user: User) {
         self.patternService = patternService
@@ -80,13 +98,44 @@ final class CreateStore: ObservableObject {
     var canRedo: Bool { !redoStack.isEmpty }
 
     func tapCell(x: Int, y: Int) {
+        beginStroke()
+        applyTool(x: x, y: y)
+        endStroke()
+    }
+
+    func beginStroke() {
+        activeStrokeCells.removeAll()
+        hasActiveStroke = false
+    }
+
+    func dragCell(x: Int, y: Int) {
+        let key = cellKey(x: x, y: y)
+        guard !activeStrokeCells.contains(key) else { return }
+        activeStrokeCells.insert(key)
+        applyTool(x: x, y: y)
+    }
+
+    func endStroke() {
+        activeStrokeCells.removeAll()
+        hasActiveStroke = false
+    }
+
+    func publishAndFinalize(user: User) -> Bool {
+        finalizeForAvatar()
+        return publish(user: user)
+    }
+
+    private func applyTool(x: Int, y: Int) {
         switch selectedTool {
         case .eyedropper:
             if let picked = currentPattern.pixels.first(where: { $0.x == x && $0.y == y })?.colorHex {
                 selectedColorHex = picked
             }
         case .brush, .eraser:
-            pushUndoState()
+            if !hasActiveStroke {
+                pushUndoState()
+                hasActiveStroke = true
+            }
             if let index = currentPattern.pixels.firstIndex(where: { $0.x == x && $0.y == y }) {
                 if selectedTool == .eraser {
                     currentPattern.pixels.remove(at: index)
@@ -148,6 +197,10 @@ final class CreateStore: ObservableObject {
         undoStack.append(currentPattern)
         redoStack.removeAll()
     }
+
+    private func cellKey(x: Int, y: Int) -> String {
+        "\(x)-\(y)"
+    }
 }
 
 @MainActor
@@ -178,6 +231,7 @@ final class LibraryStore: ObservableObject {
 final class ProfileStore: ObservableObject {
     @Published private(set) var presetAvatars: [Avatar] = []
     @Published private(set) var eligiblePatterns: [Pattern] = []
+    @Published private(set) var publishedPatterns: [Pattern] = []
     @Published var selectedRenderStyle: AvatarRenderStyle = .bead
 
     private let avatarService: AvatarService
@@ -191,6 +245,7 @@ final class ProfileStore: ObservableObject {
     func load(for user: User) {
         presetAvatars = avatarService.presetAvatars()
         eligiblePatterns = patternService.avatarEligiblePatterns(for: user)
+        publishedPatterns = patternService.fetchLibraryContent(for: user).published
     }
 
     func makePatternAvatar(from pattern: Pattern) -> Avatar? {

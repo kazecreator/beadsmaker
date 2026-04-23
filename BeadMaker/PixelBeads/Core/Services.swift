@@ -3,8 +3,10 @@ import UIKit
 
 protocol UserService {
     func bootstrapGuestUser() -> User
+    func isHandleAvailable(_ handle: String, excluding user: User) -> Bool
     func claimHandle(_ handle: String, for user: User) throws -> User
     func updateAvatar(_ avatar: Avatar, for user: User) -> User
+    func updateDisplayName(_ displayName: String, for user: User) -> User
 }
 
 protocol PatternService {
@@ -53,6 +55,17 @@ final class MockUserService: UserService {
         MockData.guestUser
     }
 
+    func isHandleAvailable(_ handle: String, excluding user: User) -> Bool {
+        let normalized = handle.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard normalized.count >= 3 else {
+            return false
+        }
+        if normalized == user.publicHandle {
+            return true
+        }
+        return !claimedHandles.contains(normalized)
+    }
+
     func claimHandle(_ handle: String, for user: User) throws -> User {
         let normalized = handle.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalized.count >= 3 else {
@@ -62,6 +75,9 @@ final class MockUserService: UserService {
             throw UserServiceError.handleTaken
         }
 
+        if let existingHandle = user.publicHandle, existingHandle != normalized {
+            claimedHandles.remove(existingHandle)
+        }
         claimedHandles.insert(normalized)
         var updated = user
         updated.publicHandle = normalized
@@ -73,6 +89,13 @@ final class MockUserService: UserService {
     func updateAvatar(_ avatar: Avatar, for user: User) -> User {
         var updated = user
         updated.avatar = avatar
+        return updated
+    }
+
+    func updateDisplayName(_ displayName: String, for user: User) -> User {
+        var updated = user
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.displayName = trimmed.isEmpty ? user.displayName : trimmed
         return updated
     }
 }
@@ -146,7 +169,7 @@ final class MockPatternService: PatternService {
 
     func avatarEligiblePatterns(for user: User) -> [Pattern] {
         let library = fetchLibraryContent(for: user)
-        return (library.drafts + library.published)
+        return library.published
             .filter { $0.isSquare && $0.status == .final }
     }
 

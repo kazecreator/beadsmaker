@@ -7,10 +7,12 @@ enum AppTab: Hashable {
     case profile
 }
 
-enum AvatarType: String, Codable, CaseIterable {
+enum AvatarType: String, Codable, CaseIterable, Identifiable {
     case preset
     case generated
     case pattern
+
+    var id: String { rawValue }
 }
 
 enum AvatarRenderStyle: String, Codable, CaseIterable, Identifiable {
@@ -21,14 +23,20 @@ enum AvatarRenderStyle: String, Codable, CaseIterable, Identifiable {
     var title: String { rawValue.capitalized }
 }
 
-enum PatternStatus: String, Codable, CaseIterable {
+enum PatternStatus: String, Codable, CaseIterable, Identifiable {
     case draft
     case final
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
 }
 
-enum PatternVisibility: String, Codable, CaseIterable {
+enum PatternVisibility: String, Codable, CaseIterable, Identifiable {
     case `private`
     case `public`
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
 }
 
 enum DifficultyLevel: String, Codable, CaseIterable, Identifiable {

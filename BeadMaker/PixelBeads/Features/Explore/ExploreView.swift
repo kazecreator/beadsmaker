@@ -15,22 +15,30 @@ struct ExploreView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     PBSectionHeader(
                         title: "Explore",
-                        subtitle: "Browse creator-made bead patterns, then remix or save without logging in."
+                        subtitle: "Browse creator-made bead patterns, then like, save, or remix them into your own drafts."
                     )
 
                     guestHighlightCard
 
                     ForEach(exploreStore.patterns) { pattern in
-                        Button {
-                            selectedPattern = pattern
-                        } label: {
-                            ExplorePatternCard(
-                                pattern: pattern,
-                                isLiked: exploreStore.likedPatternIDs.contains(pattern.id),
-                                isSaved: exploreStore.savedPatternIDs.contains(pattern.id)
-                            )
-                        }
-                        .buttonStyle(.plain)
+                        ExplorePatternCard(
+                            pattern: pattern,
+                            isLiked: exploreStore.isLiked(pattern),
+                            isSaved: exploreStore.isSaved(pattern),
+                            onOpenDetail: {
+                                selectedPattern = pattern
+                            },
+                            onLike: {
+                                exploreStore.toggleLike(pattern, user: sessionStore.currentUser)
+                            },
+                            onSave: {
+                                exploreStore.toggleSave(pattern, user: sessionStore.currentUser)
+                                libraryStore.load(for: sessionStore.currentUser)
+                            },
+                            onRemix: {
+                                remix(pattern)
+                            }
+                        )
                     }
                 }
                 .padding(16)
@@ -38,10 +46,10 @@ struct ExploreView: View {
             .background(PixelBeadsTheme.surface)
             .navigationTitle("PixelBeads")
             .sheet(item: $selectedPattern) { pattern in
-                PatternDetailSheet(
+                PatternDetailView(
                     pattern: pattern,
-                    isLiked: exploreStore.likedPatternIDs.contains(pattern.id),
-                    isSaved: exploreStore.savedPatternIDs.contains(pattern.id),
+                    isLiked: exploreStore.isLiked(pattern),
+                    isSaved: exploreStore.isSaved(pattern),
                     onLike: {
                         exploreStore.toggleLike(pattern, user: sessionStore.currentUser)
                     },
@@ -49,9 +57,8 @@ struct ExploreView: View {
                         exploreStore.toggleSave(pattern, user: sessionStore.currentUser)
                         libraryStore.load(for: sessionStore.currentUser)
                     },
-                    onUseTemplate: {
-                        createStore.loadTemplate(pattern, user: sessionStore.currentUser)
-                        selectedTab = .create
+                    onRemix: {
+                        remix(pattern)
                         selectedPattern = nil
                     }
                 )
@@ -65,7 +72,7 @@ struct ExploreView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 PBChip(title: sessionStore.currentUser.isGuest ? "Guest-first" : "Claimed Handle", accent: true)
-                PBChip(title: "Export in 1 tap")
+                PBChip(title: "Remix ready")
                 Spacer()
             }
 
@@ -73,11 +80,17 @@ struct ExploreView: View {
                 .font(.headline)
                 .foregroundStyle(PixelBeadsTheme.ink)
 
-            Text("No progress bars, no forced onboarding — just browse, remix, and export.")
+            Text("Like, save, and remix without leaving the feed. Community supports creation — not the other way around.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .pbCard()
+    }
+
+    private func remix(_ pattern: Pattern) {
+        createStore.loadTemplate(pattern, user: sessionStore.currentUser)
+        libraryStore.load(for: sessionStore.currentUser)
+        selectedTab = .create
     }
 }
 
@@ -85,10 +98,18 @@ private struct ExplorePatternCard: View {
     let pattern: Pattern
     let isLiked: Bool
     let isSaved: Bool
+    let onOpenDetail: () -> Void
+    let onLike: () -> Void
+    let onSave: () -> Void
+    let onRemix: () -> Void
+
+    private var displayLikeCount: Int { pattern.likeCount + (isLiked ? 1 : 0) }
+    private var displaySaveCount: Int { pattern.saveCount + (isSaved ? 1 : 0) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             PatternThumbnail(pattern: pattern, mode: .bead, height: 150)
+                .onTapGesture(perform: onOpenDetail)
 
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -101,83 +122,45 @@ private struct ExplorePatternCard: View {
 
                     HStack(spacing: 8) {
                         PBChip(title: pattern.difficulty.title, accent: pattern.difficulty == .easy)
-                        ForEach(pattern.tags.prefix(2), id: \.self) { tag in
-                            PBChip(title: tag)
-                        }
+                        PBChip(title: pattern.tags.first ?? "Community")
                     }
                 }
 
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 8) {
-                    Label("\(pattern.likeCount)", systemImage: isLiked ? "heart.fill" : "heart")
-                    Label("\(pattern.saveCount)", systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                    Label("\(displayLikeCount)", systemImage: isLiked ? "heart.fill" : "heart")
+                    Label("\(displaySaveCount)", systemImage: isSaved ? "bookmark.fill" : "bookmark")
                 }
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(PixelBeadsTheme.ink)
             }
+
+            HStack(spacing: 10) {
+                smallActionButton(title: isLiked ? "Liked" : "Like", systemImage: isLiked ? "heart.fill" : "heart", action: onLike)
+                smallActionButton(title: isSaved ? "Saved" : "Save", systemImage: isSaved ? "bookmark.fill" : "bookmark", action: onSave)
+                smallActionButton(title: "Remix", systemImage: "wand.and.stars", action: onRemix)
+                smallActionButton(title: "Details", systemImage: "chevron.right", action: onOpenDetail)
+            }
         }
         .pbCard()
     }
-}
 
-private struct PatternDetailSheet: View {
-    let pattern: Pattern
-    let isLiked: Bool
-    let isSaved: Bool
-    let onLike: () -> Void
-    let onSave: () -> Void
-    let onUseTemplate: () -> Void
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    PatternThumbnail(pattern: pattern, mode: .comparison, height: 220)
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(pattern.title)
-                            .font(.largeTitle.bold())
-                        Text("Designed by \(pattern.authorName)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        HStack(spacing: 8) {
-                            PBChip(title: pattern.difficulty.title, accent: true)
-                            ForEach(pattern.tags, id: \.self) { tag in
-                                PBChip(title: tag)
-                            }
-                        }
-
-                        Text("Use this pattern as a template, inspect it in bead view, or save it to your local library.")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                    }
-                    .pbCard()
-
-                    HStack(spacing: 12) {
-                        Button(action: onLike) {
-                            Label(isLiked ? "Liked" : "Like", systemImage: isLiked ? "heart.fill" : "heart")
-                        }
-                        .buttonStyle(SecondaryButtonStyle())
-
-                        Button(action: onSave) {
-                            Label(isSaved ? "Saved" : "Save", systemImage: isSaved ? "bookmark.fill" : "bookmark")
-                        }
-                        .buttonStyle(SecondaryButtonStyle())
-                    }
-
-                    Button(action: onUseTemplate) {
-                        Label("Use Template", systemImage: "wand.and.stars")
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                }
-                .padding(16)
-            }
-            .navigationTitle("Pattern Detail")
-            .navigationBarTitleDisplayMode(.inline)
-            .pbScreen()
+    private func smallActionButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(PixelBeadsTheme.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.small, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.small, style: .continuous)
+                        .stroke(PixelBeadsTheme.outline, lineWidth: 1)
+                )
         }
+        .buttonStyle(.plain)
     }
 }
 

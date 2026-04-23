@@ -1,11 +1,30 @@
 import Foundation
 
+struct PresetAvatarDefinition: Hashable {
+    let id: String
+    let title: String
+    let symbol: String
+}
+
 enum MockData {
     static let defaultPalette = [
         "#111111", "#FFFFFF", "#F5F5F5", "#FF5A36", "#3B82F6", "#F4C542", "#5DBB63"
     ]
 
-    static let presetAvatarIDs = ["coral-cat", "mono-heart", "mini-star", "pixel-smile"]
+    static let presetAvatars = [
+        PresetAvatarDefinition(id: "coral-cat", title: "Coral Cat", symbol: "cat.fill"),
+        PresetAvatarDefinition(id: "mono-heart", title: "Mono Heart", symbol: "heart.fill"),
+        PresetAvatarDefinition(id: "mini-star", title: "Mini Star", symbol: "star.fill"),
+        PresetAvatarDefinition(id: "pixel-smile", title: "Pixel Smile", symbol: "face.smiling.fill"),
+        PresetAvatarDefinition(id: "bead-bolt", title: "Bead Bolt", symbol: "bolt.fill"),
+        PresetAvatarDefinition(id: "leaf-pop", title: "Leaf Pop", symbol: "leaf.fill"),
+        PresetAvatarDefinition(id: "lucky-clover", title: "Lucky Clover", symbol: "suit.club.fill"),
+        PresetAvatarDefinition(id: "mini-moon", title: "Mini Moon", symbol: "moon.stars.fill"),
+        PresetAvatarDefinition(id: "cherry-flame", title: "Cherry Flame", symbol: "flame.fill"),
+        PresetAvatarDefinition(id: "tiny-sparkle", title: "Tiny Sparkle", symbol: "sparkles")
+    ]
+
+    static let presetAvatarIDs = presetAvatars.map(\.id)
 
     static let guestUser = User(
         id: UUID(uuidString: "11111111-1111-1111-1111-111111111111") ?? UUID(),
