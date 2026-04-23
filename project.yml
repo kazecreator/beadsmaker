@@ -1,4 +1,4 @@
-name: BeadMaker
+name: PixelBeads
 options:
   bundleIdPrefix: com.kevinzhang
   deploymentTarget:
@@ -6,16 +6,16 @@ options:
   xcodeVersion: "16.0"
 
 targets:
-  BeadMaker:
+  PixelBeads:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: BeadMaker
+      - path: BeadMaker/PixelBeads
     info:
       path: BeadMaker/Info.plist
       properties:
-        CFBundleDisplayName: 拼豆图纸
+        CFBundleDisplayName: PixelBeads
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
@@ -29,7 +29,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: "5.9"
-        PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.beadmaker
+        PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.pixelbeads
         DEVELOPMENT_TEAM: XC7WXFBUET
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "Apple Development"
