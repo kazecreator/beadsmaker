@@ -21,12 +21,12 @@ struct BeadEditorView: View {
     @State private var showShare = false
     @State private var showRenameAlert = false
     @State private var showEmptyPatternAlert = false
-    @State private var isShowingIroningAnimation = false
+    @State private var showIroningConfirmAlert = false
     @State private var pendingName = ""
-    @State private var ironingSnapshot: EditorPatternSnapshot?
 
-    @Namespace private var ironingNamespace
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var navigationModel: GalleryNavigationModel
+    @AppStorage("gallery.selectedSegment") private var selectedGallerySegment = 0
 
     init(patternID: PersistentIdentifier) {
         self.patternID = patternID
@@ -40,36 +40,7 @@ struct BeadEditorView: View {
     var body: some View {
         Group {
             if let pattern {
-                VStack(spacing: 0) {
-                    ToolbarView(
-                        viewModel: viewModel,
-                        onUndo: { viewModel.undo(on: pattern) },
-                        onRedo: { viewModel.redo(on: pattern) },
-                        onComplete: { handleComplete(for: pattern) }
-                    )
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.06), radius: 2, y: 1)
-
-                    ZStack(alignment: .bottom) {
-                        CanvasView(pattern: pattern, viewModel: viewModel)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                        if colorPanelExpanded {
-                            ColorPanelView(
-                                viewModel: viewModel,
-                                isExpanded: $colorPanelExpanded,
-                                onColorSelected: {
-                                    withAnimation(.spring()) {
-                                        colorPanelExpanded = false
-                                    }
-                                }
-                            )
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                    }
-                }
+                editorContent(pattern: pattern)
             } else {
                 ContentUnavailableView("图纸不可用", systemImage: "exclamationmark.triangle")
             }
@@ -87,7 +58,7 @@ struct BeadEditorView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showStats = true } label: {
-                    Image(systemName: "chart.bar.fill")
+                    Image(systemName: "chart.bar")
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -96,7 +67,7 @@ struct BeadEditorView: View {
                         colorPanelExpanded.toggle()
                     }
                 } label: {
-                    Image(systemName: colorPanelExpanded ? "paintpalette.fill" : "paintpalette")
+                    Image(systemName: "paintpalette")
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -134,22 +105,15 @@ struct BeadEditorView: View {
         .alert("请先绘制图案", isPresented: $showEmptyPatternAlert) {
             Button("知道了", role: .cancel) {}
         }
-        .overlay {
-            if isShowingIroningAnimation, let ironingSnapshot {
-                IroningAnimationView(
-                    patternName: ironingSnapshot.name,
-                    width: ironingSnapshot.width,
-                    height: ironingSnapshot.height,
-                    gridData: ironingSnapshot.gridData,
-                    namespace: ironingNamespace,
-                    isPresented: $isShowingIroningAnimation,
-                    onFinished: {
-                        self.ironingSnapshot = nil
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(1)
+        .alert("确认熨烫", isPresented: $showIroningConfirmAlert) {
+            Button("取消", role: .cancel) {}
+            Button("开始熨烫") {
+                if let pattern {
+                    beginIroning(for: pattern)
+                }
             }
+        } message: {
+            Text("确认后会生成成品，并进入成品详情。")
         }
         .onDisappear {
             if let pattern {
@@ -165,7 +129,41 @@ struct BeadEditorView: View {
         }
     }
 
-    private func handleComplete(for pattern: Pattern) {
+    @ViewBuilder
+    private func editorContent(pattern: Pattern) -> some View {
+        VStack(spacing: 0) {
+            ToolbarView(
+                viewModel: viewModel,
+                onUndo: { viewModel.undo(on: pattern) },
+                onRedo: { viewModel.redo(on: pattern) },
+                onComplete: { handleIroningRequest(for: pattern) }
+            )
+            .padding(.horizontal, 4)
+            .padding(.vertical, 4)
+            .background(Color(.systemBackground))
+            .shadow(color: .black.opacity(0.06), radius: 2, y: 1)
+
+            ZStack(alignment: .bottom) {
+                CanvasView(pattern: pattern, viewModel: viewModel)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                if colorPanelExpanded {
+                    ColorPanelView(
+                        viewModel: viewModel,
+                        isExpanded: $colorPanelExpanded,
+                        onColorSelected: {
+                            withAnimation(.spring()) {
+                                colorPanelExpanded = false
+                            }
+                        }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+        }
+    }
+
+    private func handleIroningRequest(for pattern: Pattern) {
         let snapshot = EditorPatternSnapshot(
             name: pattern.name,
             width: pattern.width,
@@ -178,12 +176,34 @@ struct BeadEditorView: View {
             return
         }
 
+        showIroningConfirmAlert = true
+    }
+
+    private func beginIroning(for pattern: Pattern) {
+        if colorPanelExpanded {
+            colorPanelExpanded = false
+        }
+
+        let finishedPattern = FinishedPattern(
+            name: pattern.name,
+            width: pattern.width,
+            height: pattern.height,
+            gridData: pattern.gridData,
+            sourcePatternID: String(describing: pattern.persistentModelID)
+        )
+        finishedPattern.modifiedAt = Date()
+
+        let previewPattern = Pattern(name: pattern.name, width: pattern.width, height: pattern.height)
+        previewPattern.gridData = pattern.gridData
+        let thumbnailImage = PatternRenderer.ironedThumbnail(pattern: previewPattern)
+        let thumbnailData = thumbnailImage.pngData()
+        finishedPattern.thumbnailData = thumbnailData
+
+        modelContext.insert(finishedPattern)
         viewModel.updateThumbnail(for: pattern)
         try? modelContext.save()
 
-        ironingSnapshot = snapshot
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isShowingIroningAnimation = true
-        }
+        selectedGallerySegment = 2
+        navigationModel.replaceTopWithFinishedDetail(finishedPattern.persistentModelID, entryMode: .ironing)
     }
 }

@@ -6,6 +6,7 @@ struct FavoritesView: View {
     @Environment(\.modelContext) private var modelContext
 
     let searchText: String
+    let onSelectFavorite: (CollectedPattern) -> Void
     let onCreateCopy: (Pattern) -> Void
 
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 16)]
@@ -33,13 +34,20 @@ struct FavoritesView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(filteredFavorites) { favorite in
-                            NavigationLink {
-                                FavoriteDetailView(favorite: favorite, onCreateCopy: onCreateCopy)
+                            Button {
+                                onSelectFavorite(favorite)
                             } label: {
                                 FavoritePatternCardView(pattern: favorite)
                             }
                             .buttonStyle(.plain)
                             .contextMenu {
+                                Button {
+                                    let copy = duplicate(favorite)
+                                    onCreateCopy(copy)
+                                } label: {
+                                    Label("生成副本", systemImage: "doc.on.doc")
+                                }
+
                                 Button(role: .destructive) {
                                     modelContext.delete(favorite)
                                     try? modelContext.save()
@@ -63,42 +71,25 @@ private struct FavoritePatternCardView: View {
     let pattern: CollectedPattern
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                Color(.systemFill)
+        PatternCardView(
+            name: pattern.name,
+            width: pattern.width,
+            height: pattern.height,
+            thumbnailData: pattern.thumbnailData,
+            isCollected: true,
+            subtitle: pattern.author,
+            badgeText: "收藏"
+        )
+    }
+}
 
-                if let data = pattern.thumbnailData,
-                   let image = UIImage(data: data) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                } else {
-                    Image(systemName: "heart.text.square")
-                        .font(.system(size: 30))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(height: 120)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(pattern.name)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-
-                Text(pattern.author)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Text("\(pattern.width) × \(pattern.height)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
-        }
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+private extension FavoritesView {
+    func duplicate(_ favorite: CollectedPattern) -> Pattern {
+        let copy = Pattern(name: "\(favorite.name) 副本", width: favorite.width, height: favorite.height)
+        copy.gridData = favorite.gridData
+        copy.thumbnailData = PatternRenderer.thumbnail(pattern: copy).pngData()
+        modelContext.insert(copy)
+        try? modelContext.save()
+        return copy
     }
 }

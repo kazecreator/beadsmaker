@@ -15,47 +15,35 @@ struct IroningAnimationView: View {
     @State private var rotation = 0.0
     @State private var showsFinishedSide = false
     @State private var showsCelebration = false
-    @State private var showsFinishedBadge = false
+    @State private var shineProgress: CGFloat = -1.2
     @State private var animationTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.84),
-                    Color(red: 0.12, green: 0.13, blue: 0.18),
-                    Color.black.opacity(0.92)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            FinishedPresentationBackground()
 
-            VStack(spacing: 24) {
-                Spacer(minLength: 40)
-
-                VStack(spacing: 10) {
-                    Text(patternName)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Text(showsFinishedSide ? "熨烫完成" : "正在翻面熨烫")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.72))
-                }
-
+            VStack(spacing: 0) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .fill(.ultraThinMaterial.opacity(0.95))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                                .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.28), radius: 30, y: 18)
+                    if !showsFinishedSide {
+                        RoundedRectangle(cornerRadius: 32, style: .continuous)
+                            .fill(.ultraThinMaterial.opacity(0.95))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.28), radius: 30, y: 18)
+                            .transition(.opacity)
+                    }
 
                     Group {
                         if showsFinishedSide {
-                            IronedPatternView(width: width, height: height, gridData: gridData)
+                            IronedPatternView(width: width, height: height, gridData: gridData, showsPlate: false)
                                 .matchedGeometryEffect(id: "pattern-sheet", in: namespace)
+                                .overlay {
+                                    FinishedShineOverlay(progress: shineProgress)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                        .allowsHitTesting(false)
+                                }
                         } else {
                             PixelPatternPreview(width: width, height: height, gridData: gridData)
                                 .matchedGeometryEffect(id: "pattern-sheet", in: namespace)
@@ -68,19 +56,23 @@ struct IroningAnimationView: View {
                 .aspectRatio(1, contentMode: .fit)
                 .padding(.horizontal, 20)
                 .rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0), perspective: 0.72)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
-                if showsFinishedBadge {
-                    Label("完成", systemImage: "checkmark.circle.fill")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 12)
-                        .background(Color.accentColor.opacity(0.9))
-                        .clipShape(Capsule())
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+            if showsFinishedSide {
+                VStack {
+                    HStack {
+                        CircularToolbarButton(icon: "chevron.left") {
+                            dismissAnimation()
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+
+                    Spacer()
                 }
-
-                Spacer(minLength: 40)
+                .transition(.opacity)
             }
 
             if showsCelebration {
@@ -93,11 +85,6 @@ struct IroningAnimationView: View {
         .onDisappear {
             animationTask?.cancel()
             animationTask = nil
-        }
-        .onTapGesture {
-            if showsFinishedSide {
-                dismissAnimation()
-            }
         }
     }
 
@@ -126,12 +113,11 @@ struct IroningAnimationView: View {
 
             withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
                 showsCelebration = true
-                showsFinishedBadge = true
             }
 
-            try? await Task.sleep(nanoseconds: 1_030_000_000)
-            guard !Task.isCancelled, isPresented else { return }
-            dismissAnimation()
+            withAnimation(.easeOut(duration: 0.72)) {
+                shineProgress = 1.25
+            }
         }
     }
 
@@ -146,6 +132,38 @@ struct IroningAnimationView: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             onFinished()
+        }
+    }
+}
+
+private struct FinishedShineOverlay: View {
+    let progress: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+            let shineWidth = max(width * 0.2, 36)
+
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            .white.opacity(0.0),
+                            .white.opacity(0.5),
+                            .white.opacity(0.12),
+                            .clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: shineWidth, height: height * 1.25)
+                .rotationEffect(.degrees(16))
+                .offset(x: width * progress, y: -height * 0.08)
+                .blur(radius: 1.5)
+                .opacity(progress > 1.15 ? 0 : 1)
         }
     }
 }

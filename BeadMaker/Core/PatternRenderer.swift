@@ -44,6 +44,101 @@ enum PatternRenderer {
         return render(pattern: pattern, cellSize: cs, showGrid: false)
     }
 
+    static func ironedThumbnail(
+        pattern: Pattern,
+        size: CGSize = CGSize(width: 120, height: 120)
+    ) -> UIImage {
+        let safeWidth = max(pattern.width, 1)
+        let safeHeight = max(pattern.height, 1)
+        let outerPadding = max(min(size.width, size.height) * 0.10, 8)
+        let availableWidth = max(size.width - outerPadding * 2, 1)
+        let availableHeight = max(size.height - outerPadding * 2, 1)
+        let cellSize = min(availableWidth / CGFloat(safeWidth), availableHeight / CGFloat(safeHeight))
+        let contentSize = CGSize(width: CGFloat(safeWidth) * cellSize, height: CGFloat(safeHeight) * cellSize)
+        let contentOrigin = CGPoint(
+            x: (size.width - contentSize.width) * 0.5,
+            y: (size.height - contentSize.height) * 0.5
+        )
+        let flatInset = max(cellSize * 0.015, 0.15)
+        let flatCornerRadius = max(cellSize * 0.08, 1)
+
+        let format = UIGraphicsImageRendererFormat()
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+
+        return renderer.image { ctx in
+            let cg = ctx.cgContext
+
+            for row in 0..<pattern.height {
+                for col in 0..<pattern.width {
+                    let colorID = pattern.colorIndex(at: row, col: col)
+                    guard colorID != 0 else { continue }
+
+                    let flatRect = CGRect(
+                        x: contentOrigin.x + CGFloat(col) * cellSize + flatInset,
+                        y: contentOrigin.y + CGFloat(row) * cellSize + flatInset,
+                        width: cellSize - flatInset * 2,
+                        height: cellSize - flatInset * 2
+                    )
+                    let flatPath = UIBezierPath(roundedRect: flatRect, cornerRadius: flatCornerRadius)
+                    let flatColor = ironedBeadColor(for: colorID)
+
+                    cg.saveGState()
+                    cg.setShadow(
+                        offset: CGSize(width: 0, height: cellSize * 0.04),
+                        blur: cellSize * 0.05,
+                        color: UIColor.black.withAlphaComponent(0.08).cgColor
+                    )
+                    flatColor.setFill()
+                    flatPath.fill()
+                    cg.restoreGState()
+
+                    cg.saveGState()
+                    flatPath.addClip()
+
+                    if let topGradient = CGGradient(
+                        colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                        colors: [
+                            UIColor.white.withAlphaComponent(0.12).cgColor,
+                            UIColor.clear.cgColor
+                        ] as CFArray,
+                        locations: [0, 1]
+                    ) {
+                        cg.drawLinearGradient(
+                            topGradient,
+                            start: CGPoint(x: flatRect.midX, y: flatRect.minY),
+                            end: CGPoint(x: flatRect.midX, y: flatRect.minY + flatRect.height * 0.34),
+                            options: []
+                        )
+                    }
+
+                    if let bottomGradient = CGGradient(
+                        colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                        colors: [
+                            UIColor.clear.cgColor,
+                            UIColor.black.withAlphaComponent(0.08).cgColor
+                        ] as CFArray,
+                        locations: [0, 1]
+                    ) {
+                        cg.drawLinearGradient(
+                            bottomGradient,
+                            start: CGPoint(x: flatRect.midX, y: flatRect.maxY - flatRect.height * 0.24),
+                            end: CGPoint(x: flatRect.midX, y: flatRect.maxY),
+                            options: []
+                        )
+                    }
+
+                    cg.restoreGState()
+
+                    cg.setStrokeColor(UIColor.white.withAlphaComponent(0.08).cgColor)
+                    cg.setLineWidth(max(cellSize * 0.025, 0.3))
+                    cg.addPath(flatPath.cgPath)
+                    cg.strokePath()
+                }
+            }
+        }
+    }
+
     // MARK: - Signature
 
     /// Appends a pixel-style signature bar with avatar + nickname to the bottom of `image`.
@@ -134,6 +229,11 @@ enum PatternRenderer {
         (row + col).isMultiple(of: 2) ? emptyCellBase : emptyCellAlt
     }
 
+    private static func ironedBeadColor(for colorID: Int) -> UIColor {
+        let base = BeadColorLibrary.color(id: colorID)?.uiColor ?? UIColor.systemGray3
+        return base.adjusted(saturation: 0.98, brightness: 1.0)
+    }
+
     private static func drawMosaicCell(in context: CGContext, rect: CGRect, color: UIColor) {
         let rows = 4
         let cols = 4
@@ -165,6 +265,32 @@ enum PatternRenderer {
 }
 
 private extension UIColor {
+    func adjusted(saturation: CGFloat, brightness: CGFloat) -> UIColor {
+        var hue: CGFloat = 0
+        var currentSaturation: CGFloat = 0
+        var currentBrightness: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        if getHue(&hue, saturation: &currentSaturation, brightness: &currentBrightness, alpha: &alpha) {
+            return UIColor(
+                hue: hue,
+                saturation: min(max(currentSaturation * saturation, 0), 1),
+                brightness: min(max(currentBrightness * brightness, 0), 1),
+                alpha: alpha
+            )
+        }
+
+        var white: CGFloat = 0
+        if getWhite(&white, alpha: &alpha) {
+            return UIColor(
+                white: min(max(white * brightness, 0), 1),
+                alpha: alpha
+            )
+        }
+
+        return self
+    }
+
     func mosaicAdjusted(by amount: CGFloat) -> UIColor {
         var red: CGFloat = 0
         var green: CGFloat = 0

@@ -6,6 +6,8 @@ struct PatternCardView: View {
     let height: Int
     let thumbnailData: Data?
     let isCollected: Bool
+    var subtitle: String? = nil
+    var badgeText: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,8 +32,8 @@ struct PatternCardView: View {
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
 
-                    if isCollected {
-                        Text("外部")
+                    if let badgeText {
+                        Text(badgeText)
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -39,6 +41,13 @@ struct PatternCardView: View {
                             .foregroundStyle(Color.accentColor)
                             .clipShape(Capsule())
                     }
+                }
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
                 Text("\(width) × \(height)")

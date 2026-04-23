@@ -8,65 +8,70 @@
 
 /* Begin PBXBuildFile section */
 		023565E9BDC30D84BE170484 /* ToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FD229C4540444E06749C9A /* ToolbarView.swift */; };
-		0263A8FA83A1E67AF4EB8E9A /* BeadEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */; };
 		04B9547CB4D06BDDA831CC56 /* ColorPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2C6F0503AA5638B5600387 /* ColorPanelView.swift */; };
 		0E2AFA6A9CC63434818A7194 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F4582FBE525393C0400B87 /* QRGeneratorView.swift */; };
-		14E8F6D1A4C34B84A3CC3101 /* FavoriteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E8F6D1A4C34B84A3CC3102 /* FavoriteDetailView.swift */; };
-		14E8F6D1A4C34B84A3CC3103 /* FavoriteImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E8F6D1A4C34B84A3CC3104 /* FavoriteImportService.swift */; };
-		14E8F6D1A4C34B84A3CC3105 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E8F6D1A4C34B84A3CC3106 /* FavoritesView.swift */; };
+		0F006D83373E94E0782D3CAC /* GitHubAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7435F5AB2F096B331A45F1 /* GitHubAPIClient.swift */; };
+		0FDBEE9C77C21FC298B6F09A /* IroningAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F022B0A7058C435778DA796 /* IroningAnimationView.swift */; };
+		1282086453B777D975ED2375 /* FavoriteImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B055AD5E6308EEC2DBAA57 /* FavoriteImportService.swift */; };
 		256097CAC28F5AC15D7B9E86 /* PatternRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */; };
-		3144493D689238C4F4E70D5C /* IroningAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */; };
-		39B499D93A3A682C7D7F442A /* IronedPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E93392194EF79293D0E392E /* IronedPatternView.swift */; };
-		2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F2E215D26C4581BA636E18 /* ImageImporter.swift */; };
+		296BF3CDF4D986C101151082 /* IronedPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50FC810C0FBD17C173DAB668 /* IronedPatternView.swift */; };
+		3D95319BCD6E0A3F57260792 /* ImageImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22041F05733B54850D61A35D /* ImageImporter.swift */; };
 		451D1B4A53F7D9480B83E56B /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691B718223BB738AD7A48FBE /* ShareView.swift */; };
-		492C0D1B4E8D4C6FA4C71234 /* GitHubAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492C0D1B4E8D4C6FA4C71233 /* GitHubAPIClient.swift */; };
 		497301E28E949D71F2225695 /* PixelAvatarLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7EFB7C269972FBA195A086 /* PixelAvatarLibrary.swift */; };
-		58F4891B916B47B8B6A051AB /* ModerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F4891B916B47B8B6A051AA /* ModerationView.swift */; };
 		4E3BB548D434875E493B39F3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8921527B69A89616F210AC /* ContentView.swift */; };
 		4F95D21645D6E4031678FBFF /* AvatarPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FF2439A3A1EF55F6EFAD2D /* AvatarPickerView.swift */; };
 		58C8AB9A1B131CFE70CCB2ED /* BeadStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E31BFFC344F44F301C66895 /* BeadStatsView.swift */; };
+		61D2A7EB4C7275ADB70BC459 /* BeadEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4386B34932B1F7C9DE9FF4D1 /* BeadEditorView.swift */; };
 		655995585E68BA92283F2774 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */; };
 		68580270A31054AA0D207B0C /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F4E5CAD01B742F40B44253 /* ScannerView.swift */; };
 		73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3759C901E3220642F397C3A3 /* GalleryView.swift */; };
-		7B31A1FD54B84B6E9C1A3F22 /* MarketplaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */; };
 		8C02B7C6573D4D44564EC1BA /* PatternCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA537975C118C395CEDB0048 /* PatternCodec.swift */; };
+		8E248AF0C83C24D6818E6B97 /* ModerationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047594CBDB241DAB582D0B8C /* ModerationView.swift */; };
 		92EFA5FFAE57DD6E06BA9B78 /* BeadMakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FAD33B73DF973D67636031 /* BeadMakerApp.swift */; };
 		9595F7A55E53BB7B83363452 /* PatternCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8ECA38224DCB526054DF93 /* PatternCardView.swift */; };
+		99031DA5539B5452BFBFEC19 /* FinishedPatternDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55BDE1C6B6471679176A7671 /* FinishedPatternDetailView.swift */; };
 		A777EF6764D76F2BDB07F004 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EC2C881CF99568D17E91EAA /* EditorViewModel.swift */; };
 		AD3C7B2B95FD13065291410D /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D472869036D431C6AD83C13C /* UserProfile.swift */; };
 		B81248C17611C7D246FA5A2B /* BeadColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D2EA2622B2B262E7344B52 /* BeadColor.swift */; };
+		BAA597484E14533E87C1881E /* FavoriteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A02A005FFC2B6EDD28D2B2E /* FavoriteDetailView.swift */; };
 		C13FD0990742A0604A1387A1 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5939A0E0C5A18D6E580EAEE7 /* ProfileView.swift */; };
+		C175A5533F5FAC2D917F6625 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07E4CDD2B2852089B9CFC768 /* Assets.xcassets */; };
 		C555299E53850485A25FC442 /* BeadColorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A3E6A57B424740278A012E1 /* BeadColorLibrary.swift */; };
 		C7AB6A1959C00A46FFAE5C2F /* QRScannerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CDCB5FDBA6561E63A65334 /* QRScannerController.swift */; };
 		D3371E0BBDB9E7E172D5BAFE /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB391409A9B3001C51FD997F /* EditorView.swift */; };
+		D6E2717A88A610AFDACF8E61 /* MarketplaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F4ECFD637013623E8F65EB9 /* MarketplaceView.swift */; };
 		DCA0AA6F1C5A3B4666E07FA5 /* Pattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70E146955A1062679618E3C6 /* Pattern.swift */; };
+		F7108D7BCE9D1B64E3F6DCB3 /* FinishedPatternsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA36A8FE092F9471BB923D9 /* FinishedPatternsView.swift */; };
+		FA1BAE9B884A89555A53E1E1 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CB8273658B64B57D8FA2CE /* FavoritesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		047594CBDB241DAB582D0B8C /* ModerationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModerationView.swift; sourceTree = "<group>"; };
+		07E4CDD2B2852089B9CFC768 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0A7435F5AB2F096B331A45F1 /* GitHubAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubAPIClient.swift; sourceTree = "<group>"; };
 		186F2CFC7F518F1C2893CACC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		14E8F6D1A4C34B84A3CC3102 /* FavoriteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteDetailView.swift; sourceTree = "<group>"; };
-		14E8F6D1A4C34B84A3CC3104 /* FavoriteImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteImportService.swift; sourceTree = "<group>"; };
-		14E8F6D1A4C34B84A3CC3106 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		1C8921527B69A89616F210AC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1D8ECA38224DCB526054DF93 /* PatternCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternCardView.swift; sourceTree = "<group>"; };
-		31F2E215D26C4581BA636E18 /* ImageImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageImporter.swift; sourceTree = "<group>"; };
+		22041F05733B54850D61A35D /* ImageImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageImporter.swift; sourceTree = "<group>"; };
+		2A02A005FFC2B6EDD28D2B2E /* FavoriteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteDetailView.swift; sourceTree = "<group>"; };
 		3759C901E3220642F397C3A3 /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
-		4E93392194EF79293D0E392E /* IronedPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronedPatternView.swift; sourceTree = "<group>"; };
-		4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadEditorView.swift; sourceTree = "<group>"; };
-		52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IroningAnimationView.swift; sourceTree = "<group>"; };
 		40D2EA2622B2B262E7344B52 /* BeadColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadColor.swift; sourceTree = "<group>"; };
-		492C0D1B4E8D4C6FA4C71233 /* GitHubAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubAPIClient.swift; sourceTree = "<group>"; };
+		4386B34932B1F7C9DE9FF4D1 /* BeadEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadEditorView.swift; sourceTree = "<group>"; };
+		4EA36A8FE092F9471BB923D9 /* FinishedPatternsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinishedPatternsView.swift; sourceTree = "<group>"; };
+		4F022B0A7058C435778DA796 /* IroningAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IroningAnimationView.swift; sourceTree = "<group>"; };
+		50FC810C0FBD17C173DAB668 /* IronedPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronedPatternView.swift; sourceTree = "<group>"; };
+		55BDE1C6B6471679176A7671 /* FinishedPatternDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinishedPatternDetailView.swift; sourceTree = "<group>"; };
 		5939A0E0C5A18D6E580EAEE7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		58F4891B916B47B8B6A051AA /* ModerationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModerationView.swift; sourceTree = "<group>"; };
 		5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternRenderer.swift; sourceTree = "<group>"; };
+		5F4ECFD637013623E8F65EB9 /* MarketplaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceView.swift; sourceTree = "<group>"; };
 		691B718223BB738AD7A48FBE /* ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareView.swift; sourceTree = "<group>"; };
 		70E146955A1062679618E3C6 /* Pattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pattern.swift; sourceTree = "<group>"; };
 		76F4E5CAD01B742F40B44253 /* ScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
 		77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
-		7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceView.swift; sourceTree = "<group>"; };
 		7EC2C881CF99568D17E91EAA /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
 		8226AD744345945D49F18CD7 /* BeadMaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeadMaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A3E6A57B424740278A012E1 /* BeadColorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadColorLibrary.swift; sourceTree = "<group>"; };
+		96B055AD5E6308EEC2DBAA57 /* FavoriteImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteImportService.swift; sourceTree = "<group>"; };
 		98FD229C4540444E06749C9A /* ToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarView.swift; sourceTree = "<group>"; };
 		9E31BFFC344F44F301C66895 /* BeadStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadStatsView.swift; sourceTree = "<group>"; };
 		AB391409A9B3001C51FD997F /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
@@ -78,6 +83,7 @@
 		E9F4582FBE525393C0400B87 /* QRGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRGeneratorView.swift; sourceTree = "<group>"; };
 		F3FAD33B73DF973D67636031 /* BeadMakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeadMakerApp.swift; sourceTree = "<group>"; };
 		F3FF2439A3A1EF55F6EFAD2D /* AvatarPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarPickerView.swift; sourceTree = "<group>"; };
+		F7CB8273658B64B57D8FA2CE /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -101,14 +107,14 @@
 		66F22D9E4158170854A6FE50 /* Editor */ = {
 			isa = PBXGroup;
 			children = (
-				4F51D2498AF1F774C86E0B0D /* BeadEditorView.swift */,
+				4386B34932B1F7C9DE9FF4D1 /* BeadEditorView.swift */,
 				9E31BFFC344F44F301C66895 /* BeadStatsView.swift */,
 				77D1AA4C7B52D8A5B38C6912 /* CanvasView.swift */,
 				CB2C6F0503AA5638B5600387 /* ColorPanelView.swift */,
 				AB391409A9B3001C51FD997F /* EditorView.swift */,
 				7EC2C881CF99568D17E91EAA /* EditorViewModel.swift */,
-				4E93392194EF79293D0E392E /* IronedPatternView.swift */,
-				52A49FDFA4D766698E1A4507 /* IroningAnimationView.swift */,
+				50FC810C0FBD17C173DAB668 /* IronedPatternView.swift */,
+				4F022B0A7058C435778DA796 /* IroningAnimationView.swift */,
 				98FD229C4540444E06749C9A /* ToolbarView.swift */,
 			);
 			path = Editor;
@@ -134,32 +140,14 @@
 			path = Scanner;
 			sourceTree = "<group>";
 		};
-		7B31A1FD54B84B6E9C1A3F20 /* Marketplace */ = {
-			isa = PBXGroup;
-			children = (
-				7B31A1FD54B84B6E9C1A3F21 /* MarketplaceView.swift */,
-			);
-			path = Marketplace;
-			sourceTree = "<group>";
-		};
-		14E8F6D1A4C34B84A3CC3107 /* Favorites */ = {
-			isa = PBXGroup;
-			children = (
-				14E8F6D1A4C34B84A3CC3102 /* FavoriteDetailView.swift */,
-				14E8F6D1A4C34B84A3CC3104 /* FavoriteImportService.swift */,
-				14E8F6D1A4C34B84A3CC3106 /* FavoritesView.swift */,
-			);
-			path = Favorites;
-			sourceTree = "<group>";
-		};
 		9B29E3C6584EB06519C92E6C /* Features */ = {
 			isa = PBXGroup;
 			children = (
 				66F22D9E4158170854A6FE50 /* Editor */,
-				14E8F6D1A4C34B84A3CC3107 /* Favorites */,
+				E5C5246B7F2DFA52B4F55158 /* Favorites */,
 				E5AD40D1E3E1FC88B5203062 /* Gallery */,
-				7B31A1FD54B84B6E9C1A3F20 /* Marketplace */,
-				58F4891B916B47B8B6A051AC /* Moderation */,
+				A8423971F556A4B5821AC09E /* Marketplace */,
+				B14846B026364BD3E177D50C /* Moderation */,
 				228E21DB4E542B14BB33D39E /* Profile */,
 				94CC86C690134E6D67D585D6 /* Scanner */,
 				D3068A16821EC9E418FA9EA9 /* Share */,
@@ -167,21 +155,28 @@
 			path = Features;
 			sourceTree = "<group>";
 		};
-		58F4891B916B47B8B6A051AC /* Moderation */ = {
+		A8423971F556A4B5821AC09E /* Marketplace */ = {
 			isa = PBXGroup;
 			children = (
-				58F4891B916B47B8B6A051AA /* ModerationView.swift */,
+				5F4ECFD637013623E8F65EB9 /* MarketplaceView.swift */,
+			);
+			path = Marketplace;
+			sourceTree = "<group>";
+		};
+		B14846B026364BD3E177D50C /* Moderation */ = {
+			isa = PBXGroup;
+			children = (
+				047594CBDB241DAB582D0B8C /* ModerationView.swift */,
 			);
 			path = Moderation;
 			sourceTree = "<group>";
 		};
-
 		B5E8B3D63B9260A59AF085B4 /* Core */ = {
 			isa = PBXGroup;
 			children = (
 				8A3E6A57B424740278A012E1 /* BeadColorLibrary.swift */,
-				492C0D1B4E8D4C6FA4C71233 /* GitHubAPIClient.swift */,
-				31F2E215D26C4581BA636E18 /* ImageImporter.swift */,
+				0A7435F5AB2F096B331A45F1 /* GitHubAPIClient.swift */,
+				22041F05733B54850D61A35D /* ImageImporter.swift */,
 				5E4643F29218E11DBBE8BC6C /* PatternRenderer.swift */,
 				AB7EFB7C269972FBA195A086 /* PixelAvatarLibrary.swift */,
 			);
@@ -191,6 +186,7 @@
 		B82F4A963642F4769D86BA7F /* BeadMaker */ = {
 			isa = PBXGroup;
 			children = (
+				07E4CDD2B2852089B9CFC768 /* Assets.xcassets */,
 				186F2CFC7F518F1C2893CACC /* Info.plist */,
 				C3BE8F90EB13FB16CCEDBB26 /* App */,
 				B5E8B3D63B9260A59AF085B4 /* Core */,
@@ -221,10 +217,22 @@
 		E5AD40D1E3E1FC88B5203062 /* Gallery */ = {
 			isa = PBXGroup;
 			children = (
+				55BDE1C6B6471679176A7671 /* FinishedPatternDetailView.swift */,
+				4EA36A8FE092F9471BB923D9 /* FinishedPatternsView.swift */,
 				3759C901E3220642F397C3A3 /* GalleryView.swift */,
 				1D8ECA38224DCB526054DF93 /* PatternCardView.swift */,
 			);
 			path = Gallery;
+			sourceTree = "<group>";
+		};
+		E5C5246B7F2DFA52B4F55158 /* Favorites */ = {
+			isa = PBXGroup;
+			children = (
+				2A02A005FFC2B6EDD28D2B2E /* FavoriteDetailView.swift */,
+				96B055AD5E6308EEC2DBAA57 /* FavoriteImportService.swift */,
+				F7CB8273658B64B57D8FA2CE /* FavoritesView.swift */,
+			);
+			path = Favorites;
 			sourceTree = "<group>";
 		};
 		F5A4F49F8BE25A88E2239DD3 = {
@@ -243,6 +251,7 @@
 			buildConfigurationList = E0EE100B49DFAAE0F0439761 /* Build configuration list for PBXNativeTarget "BeadMaker" */;
 			buildPhases = (
 				BF20007DE219067428EB2ADB /* Sources */,
+				DCB314CEF7F912D0A996EA36 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -287,19 +296,26 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		DCB314CEF7F912D0A996EA36 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C175A5533F5FAC2D917F6625 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		BF20007DE219067428EB2ADB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0263A8FA83A1E67AF4EB8E9A /* BeadEditorView.swift in Sources */,
 				4F95D21645D6E4031678FBFF /* AvatarPickerView.swift in Sources */,
-				14E8F6D1A4C34B84A3CC3101 /* FavoriteDetailView.swift in Sources */,
-				14E8F6D1A4C34B84A3CC3103 /* FavoriteImportService.swift in Sources */,
-				14E8F6D1A4C34B84A3CC3105 /* FavoritesView.swift in Sources */,
-				492C0D1B4E8D4C6FA4C71234 /* GitHubAPIClient.swift in Sources */,
 				B81248C17611C7D246FA5A2B /* BeadColor.swift in Sources */,
 				C555299E53850485A25FC442 /* BeadColorLibrary.swift in Sources */,
+				61D2A7EB4C7275ADB70BC459 /* BeadEditorView.swift in Sources */,
 				92EFA5FFAE57DD6E06BA9B78 /* BeadMakerApp.swift in Sources */,
 				58C8AB9A1B131CFE70CCB2ED /* BeadStatsView.swift in Sources */,
 				655995585E68BA92283F2774 /* CanvasView.swift in Sources */,
@@ -307,12 +323,18 @@
 				4E3BB548D434875E493B39F3 /* ContentView.swift in Sources */,
 				D3371E0BBDB9E7E172D5BAFE /* EditorView.swift in Sources */,
 				A777EF6764D76F2BDB07F004 /* EditorViewModel.swift in Sources */,
+				BAA597484E14533E87C1881E /* FavoriteDetailView.swift in Sources */,
+				1282086453B777D975ED2375 /* FavoriteImportService.swift in Sources */,
+				FA1BAE9B884A89555A53E1E1 /* FavoritesView.swift in Sources */,
+				99031DA5539B5452BFBFEC19 /* FinishedPatternDetailView.swift in Sources */,
+				F7108D7BCE9D1B64E3F6DCB3 /* FinishedPatternsView.swift in Sources */,
 				73910A7DA14252D7A3DD671B /* GalleryView.swift in Sources */,
-				2D30B248F80D4833A8F71156 /* ImageImporter.swift in Sources */,
-				39B499D93A3A682C7D7F442A /* IronedPatternView.swift in Sources */,
-				3144493D689238C4F4E70D5C /* IroningAnimationView.swift in Sources */,
-				7B31A1FD54B84B6E9C1A3F22 /* MarketplaceView.swift in Sources */,
-				58F4891B916B47B8B6A051AB /* ModerationView.swift in Sources */,
+				0F006D83373E94E0782D3CAC /* GitHubAPIClient.swift in Sources */,
+				3D95319BCD6E0A3F57260792 /* ImageImporter.swift in Sources */,
+				296BF3CDF4D986C101151082 /* IronedPatternView.swift in Sources */,
+				0FDBEE9C77C21FC298B6F09A /* IroningAnimationView.swift in Sources */,
+				D6E2717A88A610AFDACF8E61 /* MarketplaceView.swift in Sources */,
+				8E248AF0C83C24D6818E6B97 /* ModerationView.swift in Sources */,
 				DCA0AA6F1C5A3B4666E07FA5 /* Pattern.swift in Sources */,
 				9595F7A55E53BB7B83363452 /* PatternCardView.swift in Sources */,
 				8C02B7C6573D4D44564EC1BA /* PatternCodec.swift in Sources */,
@@ -401,7 +423,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kevinzhang.pixelbeads;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevinzhang.beadmaker;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -485,7 +507,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kevinzhang.pixelbeads;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevinzhang.beadmaker;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";

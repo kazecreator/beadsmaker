@@ -33,6 +33,36 @@ final class Pattern {
 }
 
 @Model
+final class FinishedPattern {
+    var name: String
+    var width: Int
+    var height: Int
+    var gridData: [Int]
+    var thumbnailData: Data?
+    var sourcePatternID: String?
+    var createdAt: Date
+    var modifiedAt: Date
+
+    init(
+        name: String,
+        width: Int,
+        height: Int,
+        gridData: [Int],
+        thumbnailData: Data? = nil,
+        sourcePatternID: String? = nil
+    ) {
+        self.name = name
+        self.width = width
+        self.height = height
+        self.gridData = gridData
+        self.thumbnailData = thumbnailData
+        self.sourcePatternID = sourcePatternID
+        self.createdAt = Date()
+        self.modifiedAt = Date()
+    }
+}
+
+@Model
 final class CollectedPattern {
     var name: String
     var author: String

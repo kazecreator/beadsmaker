@@ -240,6 +240,7 @@ private struct NativeCanvasScrollView: UIViewRepresentable {
 
 private final class PixelCanvasUIView: UIView {
     private static let rulerThickness: CGFloat = 28
+    private static let colorSpace = CGColorSpaceCreateDeviceRGB()
 
     var onBeginStroke: (() -> Void)?
     var onPaintCell: ((Int, Int) -> Void)?
@@ -367,8 +368,7 @@ private final class PixelCanvasUIView: UIView {
 
                 let colorId = gridData[idx]
                 if colorId != 0, let bead = BeadColorLibrary.color(id: colorId) {
-                    context.setFillColor(bead.uiColor.cgColor)
-                    context.fill(cellRect)
+                    drawBead(in: context, cellRect: cellRect, color: bead.uiColor)
                 } else {
                     let baseColor = (row + col).isMultiple(of: 2) ? emptyCellBase : emptyCellAlt
                     drawMosaicCell(in: context, cellRect: cellRect, color: baseColor)
@@ -592,6 +592,96 @@ private final class PixelCanvasUIView: UIView {
         context.stroke(gridRect.insetBy(dx: 0.5, dy: 0.5))
     }
 
+    private func drawBead(in context: CGContext, cellRect: CGRect, color: UIColor) {
+        let inset = max(cellSize * 0.08, 0.5)
+        let beadRect = cellRect.insetBy(dx: inset, dy: inset)
+        guard beadRect.width > 0, beadRect.height > 0 else { return }
+
+        let basePath = UIBezierPath(ovalIn: beadRect)
+        let centerPoint = CGPoint(
+            x: beadRect.midX - beadRect.width * 0.14,
+            y: beadRect.midY - beadRect.height * 0.16
+        )
+        let gradientRadius = max(beadRect.width, beadRect.height) * 0.72
+
+        context.saveGState()
+        basePath.addClip()
+
+        let gradientColors = [
+            color.shaded(by: 0.18).cgColor,
+            color.cgColor,
+            color.shaded(by: -0.14).cgColor
+        ] as CFArray
+        if let beadGradient = CGGradient(
+            colorsSpace: Self.colorSpace,
+            colors: gradientColors,
+            locations: [0, 0.64, 1]
+        ) {
+            context.drawRadialGradient(
+                beadGradient,
+                startCenter: centerPoint,
+                startRadius: 0,
+                endCenter: centerPoint,
+                endRadius: gradientRadius,
+                options: [.drawsAfterEndLocation]
+            )
+        } else {
+            context.setFillColor(color.cgColor)
+            context.fill(beadRect)
+        }
+
+        if cellSize >= 8 {
+            let highlightRect = beadRect
+                .insetBy(dx: beadRect.width * 0.24, dy: beadRect.height * 0.24)
+                .offsetBy(dx: -beadRect.width * 0.10, dy: -beadRect.height * 0.12)
+            let highlightCenter = CGPoint(x: highlightRect.midX, y: highlightRect.midY)
+
+            if let highlightGradient = CGGradient(
+                colorsSpace: Self.colorSpace,
+                colors: [
+                    UIColor.white.withAlphaComponent(0.18).cgColor,
+                    UIColor.white.withAlphaComponent(0.05).cgColor,
+                    UIColor.clear.cgColor
+                ] as CFArray,
+                locations: [0, 0.55, 1]
+            ) {
+                context.drawRadialGradient(
+                    highlightGradient,
+                    startCenter: highlightCenter,
+                    startRadius: 0,
+                    endCenter: highlightCenter,
+                    endRadius: max(highlightRect.width, highlightRect.height),
+                    options: [.drawsAfterEndLocation]
+                )
+            }
+
+            let shadeRect = beadRect.offsetBy(dx: beadRect.width * 0.06, dy: beadRect.height * 0.08)
+            if let shadeGradient = CGGradient(
+                colorsSpace: Self.colorSpace,
+                colors: [
+                    UIColor.clear.cgColor,
+                    UIColor.black.withAlphaComponent(0.10).cgColor
+                ] as CFArray,
+                locations: [0.45, 1]
+            ) {
+                context.drawLinearGradient(
+                    shadeGradient,
+                    start: CGPoint(x: shadeRect.minX, y: shadeRect.minY),
+                    end: CGPoint(x: shadeRect.maxX, y: shadeRect.maxY),
+                    options: []
+                )
+            }
+        }
+
+        context.restoreGState()
+
+        context.saveGState()
+        context.setStrokeColor(color.shaded(by: -0.18).withAlphaComponent(0.55).cgColor)
+        context.setLineWidth(max(cellSize * 0.03, 0.35))
+        context.strokeEllipse(in: beadRect.insetBy(dx: 0.2, dy: 0.2))
+        context.restoreGState()
+    }
+
     private func drawMosaicCell(in context: CGContext, cellRect: CGRect, color: UIColor) {
         let rows = 4
         let cols = 4
@@ -631,6 +721,29 @@ private final class PixelCanvasUIView: UIView {
 }
 
 private extension UIColor {
+    func shaded(by amount: CGFloat) -> UIColor {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+            var white: CGFloat = 0
+            if getWhite(&white, alpha: &alpha) {
+                let adjusted = min(max(white + amount, 0), 1)
+                return UIColor(white: adjusted, alpha: alpha)
+            }
+            return self
+        }
+
+        return UIColor(
+            red: min(max(red + amount, 0), 1),
+            green: min(max(green + amount, 0), 1),
+            blue: min(max(blue + amount, 0), 1),
+            alpha: alpha
+        )
+    }
+
     func mosaicAdjusted(by amount: CGFloat) -> UIColor {
         var red: CGFloat = 0
         var green: CGFloat = 0

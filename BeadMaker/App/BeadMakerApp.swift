@@ -7,6 +7,6 @@ struct BeadMakerApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Pattern.self, CollectedPattern.self, UserProfile.self])
+        .modelContainer(for: [Pattern.self, FinishedPattern.self, CollectedPattern.self, UserProfile.self])
     }
 }

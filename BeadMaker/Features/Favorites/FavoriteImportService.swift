@@ -219,7 +219,7 @@ enum FavoriteImportService {
     private static func thumbnailData(for payload: FavoritePatternPayload) -> Data? {
         let preview = Pattern(name: payload.name, width: payload.width, height: payload.height)
         preview.gridData = payload.gridData
-        return PatternRenderer.thumbnail(pattern: preview).pngData()
+        return PatternRenderer.ironedThumbnail(pattern: preview).pngData()
     }
 }
 

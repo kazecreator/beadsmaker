@@ -39,30 +39,31 @@ struct ToolbarView: View {
                 viewModel.isPanMode = true
             }
 
+            // Iron
+            toolToggle(icon: "flame", label: "熨烫", active: false) {
+                onComplete()
+            }
+
             Spacer()
 
             // Selected color preview
             if let bead = BeadColorLibrary.color(id: viewModel.selectedColorId) {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("当前颜色")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                        Text(bead.chineseName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Circle()
                         .fill(bead.color)
                         .frame(width: 22, height: 22)
                         .overlay(Circle().stroke(Color.gray.opacity(0.4), lineWidth: 1))
-                    Text(bead.chineseName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
-                .padding(.trailing, 4)
-            }
-
-            Button(action: onComplete) {
-                Label("完成", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.accentColor.opacity(0.12))
-                    .clipShape(Capsule())
+                .padding(.trailing, 6)
             }
         }
     }
