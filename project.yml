@@ -5,23 +5,33 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
 
+packages:
+  Supabase:
+    url: https://github.com/supabase-community/supabase-swift.git
+    from: 2.43.1
+
 targets:
   PixelBeads:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
+    configFiles:
+      Debug: Config/Local.xcconfig
+      Release: Config/Local.xcconfig
     sources:
-      - path: BeadMaker/PixelBeads
+      - path: PixelBeads
     info:
-      path: BeadMaker/Info.plist
+      path: PixelBeads/Info.plist
       properties:
         CFBundleDisplayName: PixelBeads
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
-        NSCameraUsageDescription: 需要相机权限来扫描图纸二维码
-        NSPhotoLibraryAddUsageDescription: 需要相册权限来保存二维码图片
-        NSPhotoLibraryUsageDescription: 需要相册权限来读取二维码图片
+        NSCameraUsageDescription: Camera access is used to scan pattern QR codes.
+        NSPhotoLibraryAddUsageDescription: Photo library access is used to save QR code images.
+        NSPhotoLibraryUsageDescription: Photo library access is used to read QR code images.
+        PB_SUPABASE_URL: $(SUPABASE_URL_SCHEME)://$(SUPABASE_URL_HOST)
+        PB_SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -30,8 +40,23 @@ targets:
       base:
         SWIFT_VERSION: "5.9"
         PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.pixelbeads
-        DEVELOPMENT_TEAM: XC7WXFBUET
+        DEVELOPMENT_TEAM: 84SJV77585
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "Apple Development"
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - package: Supabase
+        product: Supabase
+  PixelBeadsTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: PixelBeadsTests
+    dependencies:
+      - target: PixelBeads
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.9"

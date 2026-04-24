@@ -1,2 +1,8 @@
 build/
 .build-data/
+.derived/
+.device-appdata/
+.device-appsupport/
+Config/Local.xcconfig
+*.xcuserstate
+xcuserdata/
