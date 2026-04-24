@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "PixelBeads";
+"NSCameraUsageDescription" = "Camera access is used to scan pattern QR codes.";
+"NSPhotoLibraryAddUsageDescription" = "Photo library access is used to save finished PNG exports.";
+"NSPhotoLibraryUsageDescription" = "Photo library access is used to save finished PNG exports.";

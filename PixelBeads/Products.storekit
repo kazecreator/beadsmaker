@@ -1,0 +1,47 @@
+{
+  "identifier" : "com.pixelbeads.storekit",
+  "nonConsumableProducts" : [
+    {
+      "displayPrice" : "6",
+      "familyShareable" : false,
+      "internalID" : "C3D4E5F6-A1B2-C3D4-E5F6-A1B2C3D4E5F6",
+      "localizations" : [
+        {
+          "description" : "Publish patterns to the community, unlimited drafts, and iCloud sync.",
+          "displayName" : "PixelBeads Pro",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "向社区发布图纸、无限草稿数量、iCloud 同步。",
+          "displayName" : "PixelBeads Pro",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.pixelbeads.pro",
+      "referenceName" : "PixelBeads Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_enableAskToBuyInterruptedPurchases" : false,
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "kind" : "Load",
+        "on" : false
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "kind" : "Purchase",
+        "on" : false
+      }
+    ]
+  },
+  "version" : {
+    "major" : 2,
+    "minor" : 0,
+    "patch" : 0
+  }
+}
