@@ -80,6 +80,16 @@ final class ProStatusManager: ObservableObject {
     /// Initiates a StoreKit 2 purchase flow.
     /// Returns the result; the caller is responsible for the post-purchase UX.
     func purchase() async -> PurchaseResult {
+        #if DEBUG
+        // Xcode 26 beta: StoreKit local testing is broken on real devices.
+        // When product is nil in debug builds, simulate a successful purchase so the
+        // downstream flow (Apple Sign In → ConfirmNameView → Supabase) can be regression-tested.
+        if product == nil {
+            await applyPro()
+            return .success
+        }
+        #endif
+
         guard let product else {
             return .failed(L10n.tr("Product not available. Check your internet connection."))
         }
@@ -149,11 +159,23 @@ final class ProStatusManager: ObservableObject {
         do {
             let products = try await Product.products(for: [Self.productID])
             self.product = products.first
+            print("[ProStatusManager] Loaded \(products.count) product(s). product=\(String(describing: products.first?.id))")
         } catch {
+            print("[ProStatusManager] Product load FAILED: \(error)")
             // Product load failure is non-fatal; purchase button is disabled.
         }
         await checkEntitlements()
     }
+
+    #if DEBUG
+    /// Clears Pro status from Keychain and memory. Debug testing only.
+    func debugResetPro() {
+        isPro = false
+        product = nil
+        ProKeychain.write(false)
+        Task { await loadProductAndVerify() }
+    }
+    #endif
 
     private func applyPro() async {
         isPro = true

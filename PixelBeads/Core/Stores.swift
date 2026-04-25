@@ -39,6 +39,13 @@ final class AppSessionStore: ObservableObject {
         currentUser.isPro = true
     }
 
+    #if DEBUG
+    /// Resets user back to a fresh guest state. Debug testing only.
+    func debugResetUser() {
+        currentUser = userService.bootstrapGuestUser()
+    }
+    #endif
+
     /// Links an Apple account to the current user and promotes them from guest.
     /// Called after Apple Sign In completes and the user confirms their display name.
     func linkAppleAccount(appleUserID: String, displayName: String) {

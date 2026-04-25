@@ -63,12 +63,14 @@ struct PixelBeadsApp: App {
                 if let config = supabaseConfig {
                     appleSignInManager.configure(config: config)
                 }
-                // Sync Pro status from StoreKit on cold start (background check).
+                // Sync Pro status on cold start.
+                // If Keychain already has Pro, apply it immediately.
+                // Otherwise check StoreKit entitlements (e.g. purchases made on another device).
                 if !proStatusManager.isPro {
                     await proStatusManager.checkEntitlements()
-                    if proStatusManager.isPro {
-                        sessionStore.upgradeToPro()
-                    }
+                }
+                if proStatusManager.isPro {
+                    sessionStore.upgradeToPro()
                 }
             }
         }

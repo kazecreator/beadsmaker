@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1600"
+   LastUpgradeVersion = "2610"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      runPostActionsOnFailure = "NO">
+      buildArchitectures = "Automatic">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -29,24 +29,29 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8FF6B7285F649C269008CA3A"
+               BuildableName = "PixelBeadsTests.xctest"
+               BlueprintName = "PixelBeadsTests"
+               ReferencedContainer = "container:PixelBeads.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      enableAddressSanitizer = "NO"
-      enableASanStackUseAfterReturn = "NO"
-      enableThreadSanitizer = "NO"
-      enableUBSanitizer = "NO"
-      disableMainThreadChecker = "NO"
-      stopOnEveryMainThreadCheckerIssue = "NO"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      savedToolIdentifier = ""
+      launchStyle = "0"
       useCustomWorkingDirectory = "NO"
-      debugDocumentVersioning = "YES">
-      <StoreKitConfiguration
-         reference = "container:PixelBeads/Products.storekit">
-      </StoreKitConfiguration>
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
@@ -57,6 +62,9 @@
             ReferencedContainer = "container:PixelBeads.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../PixelBeads/Products.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

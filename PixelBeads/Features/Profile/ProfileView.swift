@@ -27,6 +27,9 @@ struct ProfileView: View {
                     }
                     avatarCard
                     publishedPatternsSection
+                    #if DEBUG
+                    debugResetCard
+                    #endif
                 }
                 .padding(16)
             }
@@ -233,6 +236,21 @@ struct ProfileView: View {
         }
         .pbCard()
     }
+
+    // MARK: - Debug
+
+    #if DEBUG
+    private var debugResetCard: some View {
+        Button(role: .destructive) {
+            proStatusManager.debugResetPro()
+            sessionStore.debugResetUser()
+        } label: {
+            Label("Reset Pro (Debug)", systemImage: "arrow.counterclockwise")
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .pbCard()
+    }
+    #endif
 
     // MARK: - Helpers
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B9C0D1E2F3A4B5C6D7E8F9A1 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = B9C0D1E2F3A4B5C6D7E8F9A0 /* Products.storekit */; settings = {ATTRIBUTES = (Debug, ); }; };
 		01D4FFA3C3EC7A1301C09776 /* PatternPixelColorMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9D74A90DAE6BBF1719CEBB /* PatternPixelColorMapTests.swift */; };
 		1A8AF2E8CEB5656F0542E7D7 /* ExplorePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C081C888BE1241AEA9E745 /* ExplorePreferences.swift */; };
 		1FD525D2C924DCF837A14F5F /* DeviceIdentityStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44025FDDCAC8BABFC749D27F /* DeviceIdentityStoreTests.swift */; };
@@ -77,6 +78,7 @@
 		A2F3B1C4D5E6F7A8B9C0D1E2 /* ProStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusManager.swift; sourceTree = "<group>"; };
 		B3C4D5E6F7A8B9C0D1E2F3A4 /* AppleSignInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInManager.swift; sourceTree = "<group>"; };
 		B9C0D1E2F3A4B5C6D7E8F9A0 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = "com.apple.storekit.configuration"; path = Products.storekit; sourceTree = "<group>"; };
+		EA1B2C3D4E5F6A7B8C9D0E1F /* PixelBeads.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PixelBeads.entitlements; sourceTree = "<group>"; };
 		D5E6F7A8B9C0D1E2F3A4B5C6 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		F7A8B9C0D1E2F3A4B5C6D7E8 /* ConfirmNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmNameView.swift; sourceTree = "<group>"; };
 		3B0D894D1C8946EE60A90D66 /* PatternImageRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternImageRenderer.swift; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				933B7B06D10981BFBCE02EE3 /* Info.plist */,
+				EA1B2C3D4E5F6A7B8C9D0E1F /* PixelBeads.entitlements */,
 				B9C0D1E2F3A4B5C6D7E8F9A0 /* Products.storekit */,
 				1445B7F3AEA6658FC223A8B7 /* App */,
 				688DBE3619289C64C1382103 /* Core */,
@@ -364,6 +367,7 @@
 			files = (
 				4AD20E4ED1D4DB88855B1529 /* InfoPlist.strings in Resources */,
 				25890BC99C6C3FC259C1DC8E /* Localizable.strings in Resources */,
+				B9C0D1E2F3A4B5C6D7E8F9A1 /* Products.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

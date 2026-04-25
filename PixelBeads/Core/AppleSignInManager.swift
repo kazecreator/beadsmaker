@@ -38,6 +38,8 @@ final class AppleSignInManager: NSObject, ObservableObject {
 
     private var continuation: CheckedContinuation<AppleSignInResult, Error>?
     private var supabaseClient: SupabaseClient?
+    /// Retained to keep the ASAuthorizationController alive until its delegate fires.
+    private var authController: ASAuthorizationController?
 
     func configure(config: SupabaseClientConfig) {
         supabaseClient = SupabaseClient(supabaseURL: config.url, supabaseKey: config.anonKey)
@@ -65,6 +67,7 @@ final class AppleSignInManager: NSObject, ObservableObject {
             let controller = ASAuthorizationController(authorizationRequests: [request])
             controller.delegate = self
             controller.presentationContextProvider = self
+            self.authController = controller
             controller.performRequests()
         }
     }
@@ -131,6 +134,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
             )
             continuation?.resume(returning: result)
             continuation = nil
+            authController = nil
         }
     }
 
@@ -138,6 +142,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
         controller: ASAuthorizationController,
         didCompleteWithError error: Error
     ) {
+        print("[AppleSignInManager] didCompleteWithError: \(error)")
         Task { @MainActor in
             let authError = error as? ASAuthorizationError
             if authError?.code == .canceled {
@@ -146,6 +151,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 continuation?.resume(throwing: AppleSignInError.unknown(error.localizedDescription))
             }
             continuation = nil
+            authController = nil
         }
     }
 }
@@ -156,8 +162,8 @@ extension AppleSignInManager: ASAuthorizationControllerPresentationContextProvid
     nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow }
+            .compactMap { $0.keyWindow }
+            .first
             ?? UIWindow()
     }
 }

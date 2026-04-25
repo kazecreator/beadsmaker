@@ -130,7 +130,13 @@ struct PaywallView: View {
                 }
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(proStatusManager.purchaseInProgress || proStatusManager.product == nil)
+            .disabled({
+                #if DEBUG
+                return proStatusManager.purchaseInProgress
+                #else
+                return proStatusManager.purchaseInProgress || proStatusManager.product == nil
+                #endif
+            }())
 
             Button {
                 Task { await handleRestore() }
@@ -178,15 +184,27 @@ struct PaywallView: View {
     }
 
     private func triggerAppleSignIn() async {
+        print("[PaywallView] triggerAppleSignIn called")
+        #if DEBUG
+        // Sign in with Apple requires a paid Apple Developer account.
+        // In debug builds, skip the real flow and go directly to ConfirmNameView.
+        let mockResult = AppleSignInResult(appleUserID: "debug-apple-user-\(UUID().uuidString)", displayName: nil, email: nil)
+        signInResult = mockResult
+        isShowingConfirmName = true
+        return
+        #endif
         do {
             let result = try await appleSignInManager.signIn()
+            print("[PaywallView] signIn succeeded: \(result.appleUserID)")
             signInResult = result
             isShowingConfirmName = true
         } catch is AppleSignInError {
+            print("[PaywallView] signIn threw AppleSignInError — dismissing")
             // Cancelled or failed Apple Sign In: Pro status is already set — just dismiss.
             onUpgradeComplete?()
             dismiss()
         } catch {
+            print("[PaywallView] signIn threw unknown error: \(error)")
             // Unexpected error: still dismiss since purchase succeeded.
             onUpgradeComplete?()
             dismiss()
