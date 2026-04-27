@@ -7,12 +7,12 @@
       "internalID" : "C3D4E5F6-A1B2-C3D4-E5F6-A1B2C3D4E5F6",
       "localizations" : [
         {
-          "description" : "Unlimited drafts and iCloud sync.",
+          "description" : "Unlock unlimited drafts and iCloud sync.",
           "displayName" : "PixelBeads Pro",
           "locale" : "en_US"
         },
         {
-          "description" : "无限草稿数量、iCloud 同步。",
+          "description" : "解锁无限草稿数量和 iCloud 同步。",
           "displayName" : "PixelBeads Pro",
           "locale" : "zh_CN"
         }

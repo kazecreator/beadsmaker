@@ -26,7 +26,7 @@ struct PaywallView: View {
                     if let message = proStatusManager.errorMessage {
                         Text(message)
                             .font(.caption)
-                            .foregroundStyle(PixelBeadsTheme.coral)
+                            .foregroundStyle(PixelBeadsTheme.ink)
                             .padding(.horizontal, 4)
                     }
                 }
@@ -62,7 +62,7 @@ struct PaywallView: View {
         VStack(spacing: 8) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 44))
-                .foregroundStyle(PixelBeadsTheme.coral)
+                .foregroundStyle(PixelBeadsTheme.ink)
                 .padding(.top, 8)
             Text(L10n.tr("Become a Pro Creator"))
                 .font(.title2.bold())
@@ -89,8 +89,6 @@ struct PaywallView: View {
             }
             featureRow(icon: "doc.on.doc", title: L10n.tr("Unlimited drafts"),
                        detail: L10n.tr("No more 20-draft ceiling"))
-            featureRow(icon: "icloud", title: L10n.tr("iCloud sync"),
-                       detail: L10n.tr("Access your work across all your devices"))
         }
         .pbCard()
     }
@@ -111,9 +109,8 @@ struct PaywallView: View {
                     .font(.title3.bold())
                     .foregroundStyle(PixelBeadsTheme.ink)
             } else {
-                Text("¥6")
-                    .font(.title3.bold())
-                    .foregroundStyle(PixelBeadsTheme.ink)
+                ProgressView()
+                    .tint(PixelBeadsTheme.ink)
             }
         }
         .pbCard()
@@ -227,7 +224,7 @@ struct PaywallView: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.body.weight(.semibold))
-                .foregroundStyle(PixelBeadsTheme.coral)
+                .foregroundStyle(PixelBeadsTheme.ink)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

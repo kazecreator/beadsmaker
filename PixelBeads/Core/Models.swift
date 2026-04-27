@@ -1,7 +1,6 @@
 import Foundation
 
 enum AppTab: Hashable {
-    case explore
     case create
     case library
     case profile
@@ -113,43 +112,6 @@ enum PatternSizeTier: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-enum ExploreSortMode: String, Codable, CaseIterable, Identifiable {
-    case weekly
-    case allTime
-
-    var id: String { rawValue }
-    var title: String {
-        switch self {
-        case .weekly: return L10n.tr("Week")
-        case .allTime: return L10n.tr("All Time")
-        }
-    }
-}
-
-enum ExploreFeedSource: Equatable {
-    case remote
-    case cache
-    case localFallback
-}
-
-struct ExploreFilters: Codable, Equatable {
-    var theme: PatternTheme?
-    var difficulty: DifficultyLevel?
-    var sizeTier: PatternSizeTier?
-
-    static let `default` = ExploreFilters()
-
-    var isDefault: Bool {
-        theme == nil && difficulty == nil && sizeTier == nil
-    }
-}
-
-struct ExploreFeedSnapshot: Equatable {
-    let patterns: [Pattern]
-    let source: ExploreFeedSource
-    var hasMore: Bool = false
-}
-
 enum EditorTool: String, CaseIterable, Identifiable {
     case brush
     case eraser
@@ -189,18 +151,20 @@ enum PreviewMode: String, CaseIterable, Identifiable {
 
 enum LibrarySegment: String, CaseIterable, Identifiable {
     case drafts
+    case finished
     case saved
     case published
 
     var id: String { rawValue }
 
     static var allCases: [LibrarySegment] {
-        AppFeatureFlags.communityEnabled ? [.drafts, .saved, .published] : [.drafts]
+        AppFeatureFlags.communityEnabled ? [.drafts, .saved, .published] : [.drafts, .finished]
     }
 
     var title: String {
         switch self {
         case .drafts: return L10n.tr("Drafts")
+        case .finished: return L10n.tr("Finished")
         case .saved: return L10n.tr("Saved")
         case .published: return L10n.tr("Published")
         }
@@ -276,7 +240,7 @@ struct User: Identifiable, Codable, Hashable {
     var avatar: Avatar
     var isGuest: Bool
     var isClaimed: Bool
-    /// True after a ¥6 one-time Pro purchase. Unlocks publishing, iCloud sync, and unlimited drafts.
+    /// True after a one-time Pro purchase. Unlocks unlimited drafts.
     var isPro: Bool
     /// The Apple user ID linked after Apple Sign In (Phase 2). Nil for guest users.
     var appleUserID: String?

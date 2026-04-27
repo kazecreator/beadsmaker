@@ -2,7 +2,6 @@ import SwiftUI
 
 struct RootTabView: View {
     @ObservedObject var sessionStore: AppSessionStore
-    @ObservedObject var exploreStore: ExploreStore
     @ObservedObject var createStore: CreateStore
     @ObservedObject var libraryStore: LibraryStore
     @ObservedObject var profileStore: ProfileStore
@@ -12,18 +11,6 @@ struct RootTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            if AppFeatureFlags.communityEnabled {
-                ExploreView(
-                    sessionStore: sessionStore,
-                    exploreStore: exploreStore,
-                    createStore: createStore,
-                    libraryStore: libraryStore,
-                    selectedTab: $selection
-                )
-                .tabItem { Label("Explore", systemImage: "safari") }
-                .tag(AppTab.explore)
-            }
-
             CreateView(
                 sessionStore: sessionStore,
                 createStore: createStore,
@@ -50,7 +37,7 @@ struct RootTabView: View {
             }
         }
         .onChange(of: selection) { _, newValue in
-            if newValue == .library || newValue == .profile || newValue == .explore {
+            if newValue == .library || newValue == .profile {
                 Task {
                     await reloadStores()
                 }
@@ -60,9 +47,6 @@ struct RootTabView: View {
 
     private func reloadStores() async {
         let user = sessionStore.currentUser
-        if AppFeatureFlags.communityEnabled {
-            await exploreStore.load(for: user, deviceID: deviceID)
-        }
         libraryStore.load(for: user)
         profileStore.load(for: user)
     }

@@ -1,6 +1,5 @@
 import Foundation
 import AuthenticationServices
-import Supabase
 
 // MARK: - Result type
 
@@ -37,13 +36,8 @@ final class AppleSignInManager: NSObject, ObservableObject {
     @Published var errorMessage: String?
 
     private var continuation: CheckedContinuation<AppleSignInResult, Error>?
-    private var supabaseClient: SupabaseClient?
     /// Retained to keep the ASAuthorizationController alive until its delegate fires.
     private var authController: ASAuthorizationController?
-
-    func configure(config: SupabaseClientConfig) {
-        supabaseClient = SupabaseClient(supabaseURL: config.url, supabaseKey: config.anonKey)
-    }
 
     // MARK: - Sign In
 
@@ -72,21 +66,6 @@ final class AppleSignInManager: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Profile upsert
-
-    /// Upserts the authenticated user's display name into the Supabase `users` table.
-    /// Requires `signIn()` to have been called first in this session so the
-    /// Supabase client carries a valid JWT.
-    func upsertProfile(appleUserID: String, displayName: String) async throws {
-        guard let client = supabaseClient else { return }
-        try await client
-            .from("users")
-            .upsert([
-                "apple_id": appleUserID,
-                "display_name": displayName
-            ], onConflict: "apple_id")
-            .execute()
-    }
 }
 
 // MARK: - ASAuthorizationControllerDelegate
@@ -103,18 +82,6 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 continuation?.resume(throwing: AppleSignInError.credentialInvalid)
                 continuation = nil
                 return
-            }
-
-            // Authenticate with Supabase so subsequent requests are JWT-signed.
-            if let client = supabaseClient {
-                do {
-                    try await client.auth.signInWithIdToken(credentials: .init(
-                        provider: .apple,
-                        idToken: identityToken
-                    ))
-                } catch {
-                    // Supabase auth failure is non-fatal: the user is still Pro on-device.
-                }
             }
 
             // Reconstruct display name from given + family name (only sent on first sign-in).

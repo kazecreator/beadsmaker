@@ -2,12 +2,15 @@ import SwiftUI
 
 struct AvatarPickerView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var proStatusManager: ProStatusManager
+    @EnvironmentObject private var appleSignInManager: AppleSignInManager
 
     @ObservedObject var sessionStore: AppSessionStore
     @ObservedObject var profileStore: ProfileStore
 
     @State private var draftAvatar: Avatar?
     @State private var displayName = ""
+    @State private var isShowingPaywall = false
     @FocusState private var isNameFocused: Bool
 
     private let maxDisplayNameLength = 24
@@ -50,6 +53,11 @@ struct AvatarPickerView: View {
                 }
             }
             .pbScreen()
+        }
+        .sheet(isPresented: $isShowingPaywall) {
+            PaywallView(sessionStore: sessionStore)
+                .environmentObject(proStatusManager)
+                .environmentObject(appleSignInManager)
         }
     }
 
@@ -127,7 +135,7 @@ struct AvatarPickerView: View {
                         .background(Color.white)
                         .overlay(
                             RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.card, style: .continuous)
-                                .stroke(isSelected(avatar) ? PixelBeadsTheme.coral : PixelBeadsTheme.outline, lineWidth: isSelected(avatar) ? 2 : 1)
+                                .stroke(isSelected(avatar) ? PixelBeadsTheme.ink : PixelBeadsTheme.outline, lineWidth: isSelected(avatar) ? 2 : 1)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.card, style: .continuous))
                     }
@@ -143,7 +151,25 @@ struct AvatarPickerView: View {
             Text(L10n.tr("Pattern-Based Avatar"))
                 .font(.headline)
 
-            if profileStore.eligiblePatterns.isEmpty {
+            if !sessionStore.currentUser.isPro {
+                VStack(spacing: 12) {
+                    Image(systemName: "lock.fill")
+                        .font(.title2)
+                        .foregroundStyle(PixelBeadsTheme.ink)
+                    Text(L10n.tr("Pattern avatars are a Pro feature."))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button {
+                        isShowingPaywall = true
+                    } label: {
+                        Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
+                .frame(maxWidth: .infinity)
+            } else if profileStore.eligiblePatterns.isEmpty {
                 Text(L10n.tr("Create a square work to use it as your avatar."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -174,7 +200,7 @@ struct AvatarPickerView: View {
                             Spacer()
 
                             Image(systemName: isSelected(avatar) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(isSelected(avatar) ? PixelBeadsTheme.coral : .secondary)
+                                .foregroundStyle(isSelected(avatar) ? PixelBeadsTheme.ink : .secondary)
                         }
                     }
                     .buttonStyle(.plain)

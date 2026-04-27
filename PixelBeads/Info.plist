@@ -20,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used to scan QR codes shared by other PixelBeads users.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Photo library access is used to save finished PNG exports.</string>
 	<key>UILaunchScreen</key>

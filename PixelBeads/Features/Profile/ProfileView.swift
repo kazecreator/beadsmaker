@@ -1,16 +1,17 @@
 import SwiftUI
+import StoreKit
 
 struct ProfileView: View {
     @ObservedObject var sessionStore: AppSessionStore
     @ObservedObject var profileStore: ProfileStore
     @EnvironmentObject private var proStatusManager: ProStatusManager
     @EnvironmentObject private var appleSignInManager: AppleSignInManager
+    @EnvironmentObject private var syncManager: iCloudSyncManager
 
     @State private var isShowingEditProfileSheet = false
     @State private var isShowingPaywall = false
-
-    private let privacyPolicyURL = URL(string: "https://kazecreator.github.io/bead-maker/privacy.html")!
-    private let supportURL = URL(string: "https://kazecreator.github.io/bead-maker/support.html")!
+    @State private var isShowingPrivacyPolicy = false
+    @State private var isShowingProInfo = false
 
     var body: some View {
         NavigationStack {
@@ -32,6 +33,14 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $isShowingPaywall) {
                 PaywallView(sessionStore: sessionStore)
+                    .environmentObject(proStatusManager)
+                    .environmentObject(appleSignInManager)
+            }
+            .sheet(isPresented: $isShowingPrivacyPolicy) {
+                PrivacyPolicyView()
+            }
+            .sheet(isPresented: $isShowingProInfo) {
+                ProInfoView(sessionStore: sessionStore)
                     .environmentObject(proStatusManager)
                     .environmentObject(appleSignInManager)
             }
@@ -100,10 +109,6 @@ struct ProfileView: View {
                 PBChip(title: L10n.tr("Account linked"), accent: true)
             }
 
-            PBChip(
-                title: sessionStore.currentUser.isPro ? L10n.tr("iCloud sync") : L10n.tr("iCloud sync ready"),
-                accent: sessionStore.currentUser.isPro
-            )
         }
     }
 
@@ -140,7 +145,7 @@ struct ProfileView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "externaldrive.badge.exclamationmark")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(PixelBeadsTheme.coral)
+                    .foregroundStyle(PixelBeadsTheme.ink)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n.tr("Protect your drafts"))
@@ -153,18 +158,33 @@ struct ProfileView: View {
 
                 Spacer(minLength: 8)
 
-                Button {
-                    profileStore.dismissDataLossRiskBanner()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .padding(8)
-                        .background(PixelBeadsTheme.canvas)
-                        .clipShape(Circle())
+                if sessionStore.currentUser.isPro {
+                    Button {
+                        profileStore.dismissDataLossRiskBanner()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .padding(8)
+                            .background(PixelBeadsTheme.canvas)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.tr("Dismiss data loss reminder"))
+                } else {
+                    Button {
+                        isShowingPaywall = true
+                    } label: {
+                        Text(L10n.tr("Upgrade"))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(PixelBeadsTheme.ink)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L10n.tr("Dismiss data loss reminder"))
             }
         }
         .pbCard()
@@ -208,15 +228,40 @@ struct ProfileView: View {
 
     private var legalSection: some View {
         VStack(spacing: 0) {
-            Link(destination: privacyPolicyURL) {
+            Button {
+                isShowingProInfo = true
+            } label: {
+                legalRow(title: L10n.tr("PixelBeads Pro"), systemImage: "crown")
+            }
+
+            Divider()
+                .padding(.leading, 48)
+
+            syncRow
+
+            Divider()
+                .padding(.leading, 48)
+
+            Button {
+                isShowingPrivacyPolicy = true
+            } label: {
                 legalRow(title: L10n.tr("Privacy Policy"), systemImage: "hand.raised")
             }
 
             Divider()
                 .padding(.leading, 48)
 
-            Link(destination: supportURL) {
-                legalRow(title: L10n.tr("Support"), systemImage: "questionmark.circle")
+            Link(destination: URL(string: "mailto:kazecreator@gmail.com")!) {
+                legalRow(title: L10n.tr("Feedback"), systemImage: "envelope")
+            }
+
+            Divider()
+                .padding(.leading, 48)
+
+            Button {
+                SKStoreReviewController.requestReview()
+            } label: {
+                legalRow(title: L10n.tr("Rate Us"), systemImage: "star")
             }
         }
         .pbCard()
@@ -245,6 +290,69 @@ struct ProfileView: View {
         .contentShape(Rectangle())
     }
 
+    // MARK: - Sync
+
+    private var syncRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: syncIconName)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(syncIconColor)
+                .frame(width: 36, height: 36)
+                .background(PixelBeadsTheme.canvas)
+                .clipShape(Circle())
+
+            Text(L10n.tr("iCloud Sync"))
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(PixelBeadsTheme.ink)
+
+            Spacer()
+
+            Toggle("", isOn: syncBinding)
+                .labelsHidden()
+        }
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+    }
+
+    private var syncBinding: Binding<Bool> {
+        Binding(
+            get: {
+                if case .syncing = syncManager.syncStatus { return true }
+                if case .upToDate = syncManager.syncStatus { return true }
+                return false
+            },
+            set: { wantsOn in
+                if wantsOn {
+                    guard sessionStore.currentUser.isPro else {
+                        isShowingPaywall = true
+                        return
+                    }
+                    syncManager.startSync()
+                } else {
+                    syncManager.stopSync()
+                }
+            }
+        )
+    }
+
+    private var syncIconName: String {
+        switch syncManager.syncStatus {
+        case .unavailable, .notPro: return "icloud.slash"
+        case .syncing:              return "icloud.and.arrow.down"
+        case .upToDate:             return "checkmark.icloud"
+        case .error:                return "xmark.icloud"
+        }
+    }
+
+    private var syncIconColor: Color {
+        switch syncManager.syncStatus {
+        case .upToDate: return .green
+        case .syncing:  return .blue
+        case .error:    return .red
+        default:        return PixelBeadsTheme.ink
+        }
+    }
+
     // MARK: - Helpers
 
     @ViewBuilder
@@ -267,6 +375,8 @@ struct ProfileView: View {
         if let presetID = avatar.presetId,
            let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
             finishedAvatarPreview(for: preset.pattern, size: size)
+        } else if avatar.type == .pattern, !sessionStore.currentUser.isPro {
+            PBAvatarView(image: Image(systemName: "person.crop.square"), size: size)
         } else if let patternID = avatar.patternId,
                   let pattern = profileStore.allWorks.first(where: { $0.id == patternID })
                     ?? profileStore.eligiblePatterns.first(where: { $0.id == patternID }) {

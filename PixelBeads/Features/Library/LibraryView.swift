@@ -8,36 +8,52 @@ struct LibraryView: View {
 
     @State private var draftToDelete: Pattern?
     @State private var isShowingDraftLimitAlert = false
+    @State private var sharePattern: Pattern?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    if AppFeatureFlags.communityEnabled {
-                        Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
-                            ForEach(LibrarySegment.allCases) { segment in
-                                Text(segment.title).tag(segment)
-                            }
+                    Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
+                        ForEach(LibrarySegment.allCases) { segment in
+                            Text(segment.title).tag(segment)
                         }
-                        .pickerStyle(.segmented)
                     }
+                    .pickerStyle(.segmented)
 
                     if libraryStore.displayedPatterns.isEmpty {
                         emptyState
                     } else {
                         ForEach(libraryStore.displayedPatterns) { pattern in
-                            NavigationLink {
-                                referenceView(for: pattern)
-                            } label: {
-                                patternCard(pattern)
-                            }
-                            .buttonStyle(.plain)
-                            .contextMenu {
-                                if libraryStore.selectedSegment == .drafts {
+                            if libraryStore.selectedSegment == .drafts {
+                                Button {
+                                    createStore.loadForEditing(pattern)
+                                    selectedTab = .create
+                                } label: {
+                                    patternCard(pattern)
+                                }
+                                .buttonStyle(.plain)
+                                .contextMenu {
                                     Button(role: .destructive) {
                                         draftToDelete = pattern
                                     } label: {
                                         Label(L10n.tr("Delete Draft"), systemImage: "trash")
+                                    }
+                                }
+                            } else {
+                                NavigationLink {
+                                    referenceView(for: pattern)
+                                } label: {
+                                    patternCard(pattern)
+                                }
+                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    if libraryStore.selectedSegment == .finished {
+                                        Button(role: .destructive) {
+                                            draftToDelete = pattern
+                                        } label: {
+                                            Label(L10n.tr("Delete Finished Work"), systemImage: "trash")
+                                        }
                                     }
                                 }
                             }
@@ -54,13 +70,22 @@ struct LibraryView: View {
         } message: {
             Text(L10n.tr("You've reached the 20-draft limit. Delete a draft to make room, or upgrade to Pro for unlimited drafts."))
         }
-        .alert(L10n.tr("Delete Draft?"), isPresented: Binding(
-            get: { draftToDelete != nil },
-            set: { if !$0 { draftToDelete = nil } }
-        )) {
+        .alert(
+            libraryStore.selectedSegment == .finished
+                ? L10n.tr("Delete Finished Work?")
+                : L10n.tr("Delete Draft?"),
+            isPresented: Binding(
+                get: { draftToDelete != nil },
+                set: { if !$0 { draftToDelete = nil } }
+            )
+        ) {
             Button(L10n.tr("Delete"), role: .destructive) {
                 if let pattern = draftToDelete {
-                    libraryStore.deleteDraft(id: pattern.id, for: sessionStore.currentUser)
+                    if libraryStore.selectedSegment == .finished {
+                        libraryStore.deleteFinished(id: pattern.id, for: sessionStore.currentUser)
+                    } else {
+                        libraryStore.deleteDraft(id: pattern.id, for: sessionStore.currentUser)
+                    }
                 }
                 draftToDelete = nil
             }
@@ -68,9 +93,41 @@ struct LibraryView: View {
                 draftToDelete = nil
             }
         } message: {
-            Text(L10n.tr("This will permanently remove this draft."))
+            Text(
+                libraryStore.selectedSegment == .finished
+                    ? L10n.tr("This will permanently remove this finished work.")
+                    : L10n.tr("This will permanently remove this draft.")
+            )
+        }
+        .sheet(isPresented: Binding(
+            get: { sharePattern != nil },
+            set: { if !$0 { sharePattern = nil } }
+        )) {
+            if let pattern = sharePattern {
+                PublishShareSheet(
+                    pattern: pattern,
+                    displayName: sessionStore.currentUser.displayName,
+                    avatarImage: resolvedAvatarImage(),
+                    onDone: {
+                        libraryStore.selectedSegment = .finished
+                    }
+                )
+            }
         }
         .pbScreen()
+    }
+
+    private func resolvedAvatarImage() -> UIImage? {
+        let avatar = sessionStore.currentUser.avatar
+        if let presetID = avatar.presetId,
+           let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
+            return PatternImageRenderer.finishedImage(for: preset.pattern, cellSize: 16, scale: 2)
+        }
+        if let patternID = avatar.patternId,
+           let pattern = libraryStore.content.published.first(where: { $0.id == patternID }) {
+            return PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2)
+        }
+        return nil
     }
 
     // MARK: - Helpers
@@ -88,6 +145,26 @@ struct LibraryView: View {
                     createStore.loadForEditing(pattern)
                     selectedTab = .create
                 }
+            )
+        case .finished:
+            DraftReferenceView(
+                pattern: pattern,
+                createStore: createStore,
+                selectedTab: $selectedTab,
+                actionTitle: "Create Copy",
+                onAction: {
+                    let ok = createStore.loadTemplate(
+                        pattern,
+                        user: sessionStore.currentUser,
+                        library: libraryStore.content
+                    )
+                    if ok {
+                        selectedTab = .create
+                    } else {
+                        isShowingDraftLimitAlert = true
+                    }
+                },
+                onShare: { sharePattern = pattern }
             )
         case .saved:
             DraftReferenceView(
@@ -121,7 +198,7 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 14) {
             PatternThumbnail(
                 pattern: pattern,
-                mode: libraryStore.selectedSegment == .published ? .bead : pattern.status == .final ? .bead : .pixel,
+                mode: libraryStore.selectedSegment == .finished ? .pixel : .bead,
                 height: 170
             )
             HStack {
@@ -144,6 +221,8 @@ struct LibraryView: View {
         switch libraryStore.selectedSegment {
         case .drafts:
             return L10n.tr(pattern.status == .draft ? "Local draft" : "Ready for export")
+        case .finished:
+            return L10n.tr("Finished")
         case .saved:
             return L10n.tr("by %@", pattern.authorName)
         case .published:
@@ -155,12 +234,26 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(L10n.tr("Nothing here yet"))
                 .font(.headline)
-            Text(AppFeatureFlags.communityEnabled
-                ? L10n.tr("Saved patterns, drafts, and published work appear here automatically.")
-                : L10n.tr("Drafts appear here automatically."))
+            Text(emptyStateMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .pbCard()
+    }
+
+    private var emptyStateMessage: String {
+        switch libraryStore.selectedSegment {
+        case .drafts:
+            return AppFeatureFlags.communityEnabled
+                ? L10n.tr("Saved patterns, drafts, and published work appear here automatically.")
+                : L10n.tr("Drafts appear here automatically.")
+        case .finished:
+            return L10n.tr("Finished works appear here after you finalize a draft.")
+        case .saved:
+            return L10n.tr("Saved patterns, drafts, and published work appear here automatically.")
+        case .published:
+            return L10n.tr("Saved patterns, drafts, and published work appear here automatically.")
+        }
     }
 }

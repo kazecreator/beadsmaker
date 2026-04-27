@@ -1,9 +1,8 @@
 import Foundation
 
-/// JSON-backed PatternService that persists drafts, saved patterns, and published patterns
-/// to the app's Application Support directory.
-///
-/// Explore patterns are still served from MockData until Phase 1 (Supabase integration).
+/// JSON-backed PatternService that persists drafts, saved patterns, and published patterns.
+/// Uses a pluggable PatternStorage backend — local Application Support by default,
+/// or an iCloud ubiquity container for Pro users.
 final class LocalPatternService: PatternService {
 
     // MARK: - Constants
@@ -11,44 +10,66 @@ final class LocalPatternService: PatternService {
     /// Maximum number of drafts for a free (non-Pro) user.
     static let maxFreeDrafts = 20
 
-    // MARK: - Directories
+    // MARK: - Storage
 
-    private let fm = FileManager.default
-    private let storageRootURL: URL
+    private var storage: PatternStorage
 
-    private var baseURL: URL { storageRootURL }
-
-    private var draftsDir:    URL { baseURL.appendingPathComponent("drafts",    isDirectory: true) }
-    private var savedDir:     URL { baseURL.appendingPathComponent("saved",     isDirectory: true) }
-    private var publishedDir: URL { baseURL.appendingPathComponent("published", isDirectory: true) }
+    private var draftsDir:    URL { storage.baseURL().appendingPathComponent("drafts",    isDirectory: true) }
+    private var savedDir:     URL { storage.baseURL().appendingPathComponent("saved",     isDirectory: true) }
+    private var publishedDir: URL { storage.baseURL().appendingPathComponent("published", isDirectory: true) }
 
     // MARK: - Init
 
-    init(baseURL: URL? = nil) {
-        self.storageRootURL = baseURL ??
-            fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("PixelBeads", isDirectory: true)
+    /// Creates a service with a specific storage backend.
+    init(storage: PatternStorage) {
+        self.storage = storage
         for dir in [draftsDir, savedDir, publishedDir] {
-            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
     }
 
-    // MARK: - PatternService
-
-    func fetchExplorePatterns() -> [Pattern] {
-        MockData.explorePatterns.sorted { $0.createdAt > $1.createdAt }
+    /// Backward-compatible init using local Application Support storage.
+    convenience init(baseURL: URL? = nil) {
+        self.init(storage: LocalPatternStorage(root: baseURL))
     }
+
+    // MARK: - Storage migration
+
+    /// Migrates all existing patterns from the current storage to a new backend.
+    func migrateToiCloud(storage iCloudStorage: PatternStorage) async {
+        let drafts = storage.loadPatterns(from: draftsDir)
+        let saved = storage.loadPatterns(from: savedDir)
+        let published = storage.loadPatterns(from: publishedDir)
+
+        self.storage = iCloudStorage
+        for dir in [draftsDir, savedDir, publishedDir] {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+
+        for pattern in drafts { storage.writePattern(pattern, to: draftsDir) }
+        for pattern in saved { storage.writePattern(pattern, to: savedDir) }
+        for pattern in published { storage.writePattern(pattern, to: publishedDir) }
+    }
+
+    /// Returns the current storage backend type.
+    var isUsingiCloud: Bool { storage is iCloudPatternStorage }
+
+    // MARK: - PatternService
 
     func fetchLibraryContent(for user: User) -> LibraryContent {
         LibraryContent(
-            drafts: load(from: draftsDir),
-            saved: load(from: savedDir),
-            published: load(from: publishedDir)
+            drafts: storage.loadPatterns(from: draftsDir),
+            saved: storage.loadPatterns(from: savedDir),
+            published: storage.loadPatterns(from: publishedDir)
         )
     }
 
     func createBlankPattern(for user: User) -> Pattern {
         MockData.blankPattern(authorName: user.displayName)
+    }
+
+    private func freeTierCount() -> Int {
+        storage.patternCount(in: draftsDir) + storage.patternCount(in: publishedDir)
     }
 
     func saveDraft(_ pattern: Pattern, for user: User) -> Pattern {
@@ -59,20 +80,36 @@ final class LocalPatternService: PatternService {
         draft.status = .draft
         draft.visibility = .private
 
-        // Enforce draft limit for non-Pro users (only for new drafts, not updates)
-        let existing = load(from: draftsDir)
+        let existing = storage.loadPatterns(from: draftsDir)
         let isExisting = existing.contains { $0.id == draft.id }
         if let duplicate = existing.first(where: {
             $0.id != draft.id && draftContentSignature($0) == draftContentSignature(draft)
         }) {
             return duplicate
         }
-        if !user.isPro, !isExisting, existing.count >= Self.maxFreeDrafts {
-            return draft // limit reached — return unchanged, do not persist
+        if !user.isPro, !isExisting, freeTierCount() >= Self.maxFreeDrafts {
+            return draft
         }
 
-        write(draft, to: draftsDir)
+        storage.writePattern(draft, to: draftsDir)
         return draft
+    }
+
+    func finalizeLocally(_ pattern: Pattern, for user: User) -> (pattern: Pattern, isDuplicate: Bool) {
+        let existing = storage.loadPatterns(from: publishedDir)
+        if let duplicate = existing.first(where: {
+            $0.id != pattern.id && draftContentSignature($0) == draftContentSignature(pattern)
+        }) {
+            return (duplicate, true)
+        }
+        var finished = pattern
+        finished.authorName = user.displayName
+        finished.status = .final
+        finished.visibility = .private
+
+        storage.writePattern(finished, to: publishedDir)
+        storage.deletePattern(id: finished.id, from: draftsDir)
+        return (finished, false)
     }
 
     func publish(_ pattern: Pattern, for user: User) -> Pattern {
@@ -81,19 +118,19 @@ final class LocalPatternService: PatternService {
         published.status = .final
         published.visibility = .public
 
-        write(published, to: publishedDir)
-        delete(id: published.id, from: draftsDir)
+        storage.writePattern(published, to: publishedDir)
+        storage.deletePattern(id: published.id, from: draftsDir)
         return published
     }
 
     func savePattern(_ pattern: Pattern, for user: User) {
         var saved = pattern
         saved.saveCount += 1
-        write(saved, to: savedDir)
+        storage.writePattern(saved, to: savedDir)
     }
 
     func removeSavedPattern(id: UUID, for user: User) {
-        delete(id: id, from: savedDir)
+        storage.deletePattern(id: id, from: savedDir)
     }
 
     func remix(_ pattern: Pattern, for user: User) -> Pattern {
@@ -105,75 +142,33 @@ final class LocalPatternService: PatternService {
         remixed.visibility = .private
         remixed.createdAt = .now
 
-        // Enforce draft limit for non-Pro users
-        let existing = load(from: draftsDir)
-        if !user.isPro, existing.count >= Self.maxFreeDrafts {
-            return remixed // limit reached — return remixed pattern but do not persist
+        if !user.isPro, freeTierCount() >= Self.maxFreeDrafts {
+            return remixed
         }
 
-        write(remixed, to: draftsDir)
+        storage.writePattern(remixed, to: draftsDir)
         return remixed
     }
 
     func avatarEligiblePatterns(for user: User) -> [Pattern] {
-        load(from: publishedDir).filter { $0.isSquare && $0.status == .final }
+        storage.loadPatterns(from: publishedDir).filter { $0.isSquare && $0.status == .final }
     }
 
     // MARK: - Draft helpers
 
-    /// Returns the current number of saved drafts.
     func draftCount() -> Int {
-        load(from: draftsDir).count
+        storage.patternCount(in: draftsDir)
     }
 
-    /// Permanently removes a draft by ID.
     func deleteDraft(id: UUID) {
-        delete(id: id, from: draftsDir)
+        storage.deletePattern(id: id, from: draftsDir)
     }
 
-    // MARK: - Private persistence
-
-    private let encoder: JSONEncoder = {
-        let e = JSONEncoder()
-        e.dateEncodingStrategy = .iso8601
-        return e
-    }()
-
-    private let decoder: JSONDecoder = {
-        let d = JSONDecoder()
-        d.dateDecodingStrategy = .iso8601
-        return d
-    }()
-
-    private func fileURL(id: UUID, in directory: URL) -> URL {
-        directory.appendingPathComponent("\(id.uuidString).json")
+    func deleteFinished(id: UUID) {
+        storage.deletePattern(id: id, from: publishedDir)
     }
 
-    private func load(from directory: URL) -> [Pattern] {
-        guard let files = try? fm.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: nil,
-            options: .skipsHiddenFiles
-        ) else { return [] }
-
-        return files
-            .filter { $0.pathExtension == "json" }
-            .compactMap { url -> Pattern? in
-                guard let data = try? Data(contentsOf: url) else { return nil }
-                return try? decoder.decode(Pattern.self, from: data)
-            }
-            .sorted { $0.createdAt > $1.createdAt }
-    }
-
-    private func write(_ pattern: Pattern, to directory: URL) {
-        guard let data = try? encoder.encode(pattern) else { return }
-        let url = fileURL(id: pattern.id, in: directory)
-        try? data.write(to: url, options: .atomic)
-    }
-
-    private func delete(id: UUID, from directory: URL) {
-        try? fm.removeItem(at: fileURL(id: id, in: directory))
-    }
+    // MARK: - Private helpers
 
     private func isEmptyDraft(_ pattern: Pattern) -> Bool {
         pattern.pixels.allSatisfy { $0.colorHex == nil }

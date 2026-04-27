@@ -15,10 +15,12 @@ struct CreateView: View {
     @State private var isToolbarExpanded = true
     @State private var isTrackPointActive = false
     @State private var isShowingResetConfirmation = false
+    @State private var isShowingResizeConfirmation = false
     @State private var isShowingDraftLimitAlert = false
     @State private var isShowingEmptyPreviewAlert = false
     @State private var isShowingEmptyDraftAlert = false
     @State private var isShowingPaywall = false
+    @State private var isShowingImport = false
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: Double = 1.0
     @State private var canvasViewportSize: CGSize = .zero
@@ -133,6 +135,14 @@ struct CreateView: View {
             .navigationTitle(L10n.tr("Create"))
             .background(PixelBeadsTheme.surface)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isShowingImport = true
+                    } label: {
+                        Image(systemName: "qrcode.viewfinder")
+                    }
+                    .accessibilityLabel(L10n.tr("Import from QR"))
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         let succeeded = createStore.startNewDraft(
@@ -192,12 +202,18 @@ struct CreateView: View {
                 createStore.resizeCanvas(width: newSize, height: newSize)
             }
         }
+        .sheet(isPresented: $isShowingImport) {
+            ImportPatternView(hasExistingDrafts: !libraryStore.content.drafts.isEmpty) { pattern in
+                let remixed = createStore.remixImported(pattern)
+                libraryStore.load(for: sessionStore.currentUser)
+            }
+        }
         .confirmationDialog(
-            L10n.tr("Redo?"),
+            L10n.tr("Clear Canvas?"),
             isPresented: $isShowingResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button(L10n.tr("Redo"), role: .destructive) {
+            Button(L10n.tr("Clear Canvas"), role: .destructive) {
                 createStore.clearCanvas()
                 haptic.impactOccurred()
             }
@@ -205,13 +221,30 @@ struct CreateView: View {
         } message: {
             Text(L10n.tr("This will remove every bead from the current draft."))
         }
+        .confirmationDialog(
+            L10n.tr("Change Canvas Size?"),
+            isPresented: $isShowingResizeConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.tr("Change Size"), role: .destructive) {
+                isShowingSizePicker = true
+            }
+            Button(L10n.tr("Cancel"), role: .cancel) { }
+        } message: {
+            Text(L10n.tr("Changing size will remove beads outside the new area."))
+        }
+        .onChange(of: createStore.currentPattern.id) { _ in
+            canvasOffset = .zero
+            canvasScale = 1.0
+            hasInitializedCanvasPosition = false
+        }
         .pbScreen()
     }
 
     private var editorCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                TextField("Untitled Draft", text: $draftTitle)
+                TextField(L10n.tr("Untitled Draft"), text: $draftTitle)
                     .font(.body.weight(.semibold))
                     .textFieldStyle(.plain)
                     .onChange(of: draftTitle) { _, newValue in
@@ -254,11 +287,23 @@ struct CreateView: View {
                             }
 
                             editorControlButton(
-                                title: "Redo",
-                                systemImage: "arrow.counterclockwise.circle",
+                                title: "Clear",
+                                systemImage: "trash.circle",
                                 enabled: !createStore.currentPattern.pixels.isEmpty
                             ) {
                                 isShowingResetConfirmation = true
+                            }
+
+                            editorControlButton(
+                                title: "Size",
+                                systemImage: "squareshape.split.3x3",
+                                enabled: true
+                            ) {
+                                if createStore.currentPattern.hasPlacedBeads {
+                                    isShowingResizeConfirmation = true
+                                } else {
+                                    isShowingSizePicker = true
+                                }
                             }
                         }
                     }
@@ -280,7 +325,7 @@ struct CreateView: View {
                     Spacer()
                     Label(L10n.tr("Palette"), systemImage: "swatchpalette")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(PixelBeadsTheme.coral)
+                        .foregroundStyle(PixelBeadsTheme.ink)
                 }
                 .padding(12)
                 .background(PixelBeadsTheme.surface)
@@ -555,7 +600,7 @@ struct CreateView: View {
                                     if size == currentSize {
                                         Image(systemName: "checkmark")
                                             .font(.body.weight(.semibold))
-                                            .foregroundStyle(PixelBeadsTheme.coral)
+                                            .foregroundStyle(PixelBeadsTheme.ink)
                                     }
                                 }
                                 .contentShape(Rectangle())
@@ -683,7 +728,7 @@ struct CreateView: View {
 
             if createStore.currentPattern.pixels.contains(where: { $0.colorHex != nil }) {
                 NavigationLink {
-                    PreviewView(sessionStore: sessionStore, createStore: createStore, libraryStore: libraryStore)
+                    PreviewView(sessionStore: sessionStore, createStore: createStore, libraryStore: libraryStore, selectedTab: $selectedTab)
                 } label: {
                     Label(L10n.tr("Open Preview"), systemImage: "sparkles.rectangle.stack")
                 }

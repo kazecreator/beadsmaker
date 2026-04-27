@@ -8,6 +8,7 @@ struct DraftReferenceView: View {
     /// Optional trailing toolbar button. Pass `nil` for view-only mode.
     var actionTitle: String? = nil
     var onAction: (() -> Void)? = nil
+    var onShare: (() -> Void)? = nil
 
     @State private var canvasScale: Double = 1.0
     @State private var canvasOffset: CGSize = .zero
@@ -145,11 +146,19 @@ struct DraftReferenceView: View {
                             .font(.subheadline.weight(.semibold))
                     }
 
+                    if let onShare {
+                        Button(action: onShare) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(PixelBeadsTheme.ink)
+                        }
+                    }
+
                     if let title = actionTitle, let action = onAction {
                         Button(action: action) {
                             Text(L10n.tr(title))
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(PixelBeadsTheme.coral)
+                                .foregroundStyle(PixelBeadsTheme.ink)
                         }
                     }
                 }
@@ -229,7 +238,7 @@ struct DraftReferenceView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "swatchpalette.fill")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(PixelBeadsTheme.coral)
+                        .foregroundStyle(PixelBeadsTheme.ink)
                     Text(L10n.tr("%d colors · %d beads", colorStats.count, totalBeads))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(PixelBeadsTheme.ink)

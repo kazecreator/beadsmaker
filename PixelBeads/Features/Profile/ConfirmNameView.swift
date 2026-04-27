@@ -23,7 +23,7 @@ struct ConfirmNameView: View {
                     if let error = saveError {
                         Text(error)
                             .font(.caption)
-                            .foregroundStyle(PixelBeadsTheme.coral)
+                            .foregroundStyle(PixelBeadsTheme.ink)
                             .padding(.horizontal, 4)
                     }
                     saveCard
@@ -54,7 +54,7 @@ struct ConfirmNameView: View {
         VStack(spacing: 8) {
             Image(systemName: "person.badge.key.fill")
                 .font(.system(size: 40))
-                .foregroundStyle(PixelBeadsTheme.coral)
+                .foregroundStyle(PixelBeadsTheme.ink)
                 .padding(.top, 4)
             Text(L10n.tr("Welcome, Pro Creator!"))
                 .font(.title2.bold())
@@ -113,19 +113,7 @@ struct ConfirmNameView: View {
         saveError = nil
         defer { isSaving = false }
 
-        if AppFeatureFlags.backendEnabled {
-            do {
-                try await appleSignInManager.upsertProfile(
-                    appleUserID: appleSignInResult.appleUserID,
-                    displayName: trimmed
-                )
-            } catch {
-                // Non-fatal: local state still reflects the Pro purchase.
-                saveError = error.localizedDescription
-            }
-        }
-
-        // Update local session regardless of Supabase outcome.
+        // Update local session.
         sessionStore.linkAppleAccount(
             appleUserID: appleSignInResult.appleUserID,
             displayName: trimmed

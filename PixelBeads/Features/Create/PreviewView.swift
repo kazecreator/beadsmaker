@@ -4,11 +4,15 @@ struct PreviewView: View {
     @ObservedObject var sessionStore: AppSessionStore
     @ObservedObject var createStore: CreateStore
     @ObservedObject var libraryStore: LibraryStore
+    @Binding var selectedTab: AppTab
     @EnvironmentObject private var proStatusManager: ProStatusManager
     @EnvironmentObject private var appleSignInManager: AppleSignInManager
 
+    @Environment(\.dismiss) private var dismiss
     @State private var animationID = UUID()
-    @State private var saveStatus: PhotoSaveStatus?
+    @State private var isShowingShareSheet = false
+    @State private var finishedPattern: Pattern?
+    @State private var isDuplicateAlertShown = false
     @State private var isShowingPaywall = false
 
     private var isPublished: Bool {
@@ -30,11 +34,17 @@ struct PreviewView: View {
                     .buttonStyle(SecondaryButtonStyle())
 
                     Button {
-                        PhotoLibrarySaver.saveFinishedPNG(pattern: createStore.currentPattern) { status in
-                            saveStatus = status
+                        let result = createStore.finalizeLocally(user: sessionStore.currentUser)
+                        libraryStore.load(for: sessionStore.currentUser)
+                        if result.isDuplicate {
+                            isDuplicateAlertShown = true
+                        } else {
+                            finishedPattern = result.pattern
+                            isShowingShareSheet = true
+                            createStore.resetToBlank(user: sessionStore.currentUser)
                         }
                     } label: {
-                        Label(L10n.tr("Save Finished PNG"), systemImage: "square.and.arrow.down")
+                        Label(L10n.tr("Finish"), systemImage: "checkmark.seal")
                     }
                     .buttonStyle(SecondaryButtonStyle())
                 }
@@ -72,15 +82,23 @@ struct PreviewView: View {
             createStore.previewMode = .pixel
             animationID = UUID()
         }
-        .alert(saveStatus?.title ?? "", isPresented: Binding(
-            get: { saveStatus != nil },
-            set: { if !$0 { saveStatus = nil } }
-        )) {
-            Button(L10n.tr("OK"), role: .cancel) {
-                saveStatus = nil
-            }
+        .alert(L10n.tr("Already Saved"), isPresented: $isDuplicateAlertShown) {
+            Button(L10n.tr("OK"), role: .cancel) { }
         } message: {
-            Text(saveStatus?.message ?? "")
+            Text(L10n.tr("This pattern has already been saved as a finished work."))
+        }
+        .sheet(isPresented: $isShowingShareSheet, onDismiss: {
+            libraryStore.selectedSegment = .finished
+            selectedTab = .library
+            dismiss()
+        }) {
+            if let pattern = finishedPattern {
+                PublishShareSheet(
+                    pattern: pattern,
+                    displayName: sessionStore.currentUser.displayName,
+                    avatarImage: resolvedAvatarImage()
+                )
+            }
         }
         .sheet(isPresented: $isShowingPaywall) {
             PaywallView(sessionStore: sessionStore) {
@@ -95,6 +113,19 @@ struct PreviewView: View {
             .environmentObject(appleSignInManager)
         }
         .pbScreen()
+    }
+
+    private func resolvedAvatarImage() -> UIImage? {
+        let avatar = sessionStore.currentUser.avatar
+        if let presetID = avatar.presetId,
+           let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
+            return PatternImageRenderer.finishedImage(for: preset.pattern, cellSize: 16, scale: 2)
+        }
+        if let patternID = avatar.patternId,
+           let pattern = libraryStore.content.published.first(where: { $0.id == patternID }) {
+            return PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2)
+        }
+        return nil
     }
 }
 

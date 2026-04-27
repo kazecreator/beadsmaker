@@ -55,161 +55,7 @@ final class AppSessionStore: ObservableObject {
         if !trimmed.isEmpty {
             currentUser.displayName = trimmed
         }
-    }
-}
-
-@MainActor
-final class ExploreStore: ObservableObject {
-    @Published private(set) var patterns: [Pattern] = []
-    @Published private(set) var savedPatternIDs: Set<UUID> = []
-    @Published private(set) var isLoading = false
-    @Published private(set) var isLoadingMore = false
-    @Published private(set) var bannerMessage: String?
-    @Published private(set) var sortMode: ExploreSortMode
-    @Published private(set) var filters: ExploreFilters
-    @Published private(set) var hasMore = true
-
-    private let exploreService: ExploreService
-    private let patternService: PatternService
-    private let communityService: CommunityService
-    private let preferencesStore: ExplorePreferencesStore
-    private var currentPage = 0
-    private let pageSize = 20
-
-    init(
-        exploreService: ExploreService,
-        patternService: PatternService,
-        communityService: CommunityService,
-        preferencesStore: ExplorePreferencesStore = ExplorePreferencesStore()
-    ) {
-        self.exploreService = exploreService
-        self.patternService = patternService
-        self.communityService = communityService
-        self.preferencesStore = preferencesStore
-        self.sortMode = preferencesStore.loadSortMode()
-        self.filters = preferencesStore.loadFilters()
-    }
-
-    var hasActiveFilters: Bool {
-        !filters.isDefault
-    }
-
-    func load(for user: User, deviceID: String, forceRefresh: Bool = false) async {
-        isLoading = true
-        savedPatternIDs = communityService.savedPatternIDs(deviceID: deviceID)
-        currentPage = 0
-
-        do {
-            let snapshot = try await exploreService.fetchPatterns(
-                sort: sortMode,
-                filters: filters,
-                page: 0,
-                pageSize: pageSize,
-                forceRefresh: forceRefresh
-            )
-            patterns = snapshot.patterns
-            hasMore = snapshot.hasMore
-            bannerMessage = Self.bannerMessage(for: snapshot.source)
-        } catch {
-            patterns = patternService.fetchExplorePatterns()
-            hasMore = false
-            bannerMessage = L10n.tr("Unable to refresh community feed right now.")
-        }
-
-        isLoading = false
-    }
-
-    func loadMore(for user: User, deviceID: String) async {
-        guard hasMore, !isLoadingMore else { return }
-
-        isLoadingMore = true
-        currentPage += 1
-
-        do {
-            let snapshot = try await exploreService.fetchPatterns(
-                sort: sortMode,
-                filters: filters,
-                page: currentPage,
-                pageSize: pageSize,
-                forceRefresh: false
-            )
-            patterns.append(contentsOf: snapshot.patterns)
-            hasMore = snapshot.hasMore
-        } catch {
-            currentPage -= 1
-        }
-
-        isLoadingMore = false
-    }
-
-    func setSortMode(_ mode: ExploreSortMode, user: User, deviceID: String) async {
-        guard sortMode != mode else { return }
-        sortMode = mode
-        preferencesStore.saveSortMode(mode)
-        await load(for: user, deviceID: deviceID)
-    }
-
-    func updateTheme(_ theme: PatternTheme?, user: User, deviceID: String) async {
-        filters.theme = theme
-        preferencesStore.saveFilters(filters)
-        await load(for: user, deviceID: deviceID)
-    }
-
-    func updateDifficulty(_ difficulty: DifficultyLevel?, user: User, deviceID: String) async {
-        filters.difficulty = difficulty
-        preferencesStore.saveFilters(filters)
-        await load(for: user, deviceID: deviceID)
-    }
-
-    func updateSizeTier(_ sizeTier: PatternSizeTier?, user: User, deviceID: String) async {
-        filters.sizeTier = sizeTier
-        preferencesStore.saveFilters(filters)
-        await load(for: user, deviceID: deviceID)
-    }
-
-    func clearFilters(user: User, deviceID: String) async {
-        filters = .default
-        preferencesStore.saveFilters(filters)
-        await load(for: user, deviceID: deviceID)
-    }
-
-    func toggleSave(_ pattern: Pattern, user: User, deviceID: String) async {
-        let wasSaved = savedPatternIDs.contains(pattern.id)
-
-        do {
-            savedPatternIDs = try await communityService.toggleSave(pattern: pattern, deviceID: deviceID)
-            if wasSaved {
-                patternService.removeSavedPattern(id: pattern.id, for: user)
-            } else {
-                patternService.savePattern(pattern, for: user)
-            }
-
-        } catch {
-            bannerMessage = L10n.tr("Unable to sync saves right now.")
-        }
-    }
-
-    func isSaved(_ pattern: Pattern) -> Bool {
-        savedPatternIDs.contains(pattern.id)
-    }
-
-    func relatedPatterns(for pattern: Pattern, limit: Int = 6) async -> [Pattern] {
-        do {
-            return try await exploreService.relatedPatterns(for: pattern, limit: limit)
-        } catch {
-            return []
-        }
-    }
-
-    private static func bannerMessage(for source: ExploreFeedSource) -> String? {
-        switch source {
-        case .remote:
-            return nil
-        case .cache:
-            return L10n.tr("Using cached community patterns.")
-        case .localFallback:
-            return L10n.tr("Community feed is still using bundled preview data.")
-        }
+        userService.persist(currentUser)
     }
 }
 
@@ -311,7 +157,7 @@ final class CreateStore: ObservableObject {
     /// Returns false if the free draft limit would be exceeded.
     @discardableResult
     func loadTemplate(_ pattern: Pattern, user: User, library: LibraryContent) -> Bool {
-        guard user.isPro || library.drafts.count < LocalPatternService.maxFreeDrafts else {
+        guard user.isPro || library.drafts.count + library.published.count < LocalPatternService.maxFreeDrafts else {
             return false
         }
         var remix = patternService.remix(pattern, for: user)
@@ -322,6 +168,15 @@ final class CreateStore: ObservableObject {
         redoStack.removeAll()
         undoStack.removeAll()
         return true
+    }
+
+    /// Imports a pattern from QR code data, saves it as a draft, and loads it.
+    func remixImported(_ pattern: Pattern) {
+        currentPattern = pattern
+        selectedTool = .brush
+        isCanvasLocked = false
+        redoStack.removeAll()
+        undoStack.removeAll()
     }
 
     func updateTitle(_ title: String) {
@@ -347,6 +202,16 @@ final class CreateStore: ObservableObject {
         return true
     }
 
+    /// Marks the current pattern as finished and moves it out of drafts.
+    /// Returns `(pattern, isDuplicate)` — if isDuplicate is true the identical finished
+    /// work already exists; the returned pattern is that existing copy.
+    @discardableResult
+    func finalizeLocally(user: User) -> (pattern: Pattern, isDuplicate: Bool) {
+        let result = patternService.finalizeLocally(currentPattern, for: user)
+        currentPattern = result.pattern
+        return result
+    }
+
     /// Creates a new blank draft, saving the current one first.
     /// Returns false if the free draft limit (20) would be exceeded.
     @discardableResult
@@ -360,7 +225,7 @@ final class CreateStore: ObservableObject {
             && shouldSaveCurrentDraft
             && isNew
             && !isDuplicate
-            && library.drafts.count >= LocalPatternService.maxFreeDrafts
+            && library.drafts.count + library.published.count >= LocalPatternService.maxFreeDrafts
         guard !wouldExceedLimit else { return false }
 
         // Auto-save current work before switching
@@ -376,6 +241,18 @@ final class CreateStore: ObservableObject {
         undoStack.removeAll()
         redoStack.removeAll()
         return true
+    }
+
+    /// Resets the editor to a blank canvas without saving the current draft.
+    /// Use after finalizing a pattern to start fresh.
+    func resetToBlank(user: User) {
+        let blank = patternService.createBlankPattern(for: user)
+        currentPattern = blank
+        selectedColorHex = blank.palette.first ?? "#111111"
+        selectedTool = .brush
+        isCanvasLocked = false
+        undoStack.removeAll()
+        redoStack.removeAll()
     }
 
     func publish(user: User) -> Bool {
@@ -456,21 +333,28 @@ final class LibraryStore: ObservableObject {
     var displayedPatterns: [Pattern] {
         switch selectedSegment {
         case .drafts: return content.drafts
+        case .finished: return content.published.filter { $0.visibility == .private }
         case .saved: return content.saved
-        case .published: return content.published
+        case .published: return content.published.filter { $0.visibility == .public }
         }
     }
 
     /// True when a free user has reached the 20-draft ceiling.
     func isDraftLimitReached(for user: User) -> Bool {
         guard !user.isPro else { return false }
-        return content.drafts.count >= LocalPatternService.maxFreeDrafts
+        return content.drafts.count + content.published.count >= LocalPatternService.maxFreeDrafts
     }
 
-    /// Delete a draft by ID and refresh the content.
+    /// Delete a draft or finished work by ID and refresh the content.
     func deleteDraft(id: UUID, for user: User) {
         guard let local = patternService as? LocalPatternService else { return }
         local.deleteDraft(id: id)
+        load(for: user)
+    }
+
+    func deleteFinished(id: UUID, for user: User) {
+        guard let local = patternService as? LocalPatternService else { return }
+        local.deleteFinished(id: id)
         load(for: user)
     }
 }
@@ -501,18 +385,13 @@ final class ProfileStore: ObservableObject {
     func load(for user: User) {
         presetAvatars = avatarService.presetAvatars()
         libraryContent = patternService.fetchLibraryContent(for: user)
-        eligiblePatterns = allWorks.filter { $0.isAvatarEligibleWork }
+        eligiblePatterns = user.isPro ? allWorks.filter { $0.isAvatarEligibleWork } : []
         publishedPatterns = libraryContent.published
         shouldShowDataLossRiskBanner = dataLossRiskBannerPolicy.shouldShow(for: user)
     }
 
     var allWorks: [Pattern] {
-        var seenIDs = Set<UUID>()
-        return (libraryContent.drafts + libraryContent.saved + libraryContent.published).filter { pattern in
-            guard !seenIDs.contains(pattern.id) else { return false }
-            seenIDs.insert(pattern.id)
-            return true
-        }
+        libraryContent.published
     }
 
     func makePatternAvatar(from pattern: Pattern) -> Avatar? {

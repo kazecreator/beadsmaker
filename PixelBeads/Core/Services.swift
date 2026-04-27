@@ -8,35 +8,19 @@ protocol UserService {
     func claimHandle(_ handle: String, for user: User) throws -> User
     func updateAvatar(_ avatar: Avatar, for user: User) -> User
     func updateDisplayName(_ displayName: String, for user: User) -> User
-}
-
-protocol ExploreService {
-    func fetchPatterns(
-        sort: ExploreSortMode,
-        filters: ExploreFilters,
-        page: Int,
-        pageSize: Int,
-        forceRefresh: Bool
-    ) async throws -> ExploreFeedSnapshot
-
-    func relatedPatterns(for pattern: Pattern, limit: Int) async throws -> [Pattern]
+    func persist(_ user: User)
 }
 
 protocol PatternService {
-    func fetchExplorePatterns() -> [Pattern]
     func fetchLibraryContent(for user: User) -> LibraryContent
     func createBlankPattern(for user: User) -> Pattern
     func saveDraft(_ pattern: Pattern, for user: User) -> Pattern
+    func finalizeLocally(_ pattern: Pattern, for user: User) -> (pattern: Pattern, isDuplicate: Bool)
     func publish(_ pattern: Pattern, for user: User) -> Pattern
     func savePattern(_ pattern: Pattern, for user: User)
     func removeSavedPattern(id: UUID, for user: User)
     func remix(_ pattern: Pattern, for user: User) -> Pattern
     func avatarEligiblePatterns(for user: User) -> [Pattern]
-}
-
-protocol CommunityService {
-    func savedPatternIDs(deviceID: String) -> Set<UUID>
-    func toggleSave(pattern: Pattern, deviceID: String) async throws -> Set<UUID>
 }
 
 protocol AvatarService {
@@ -54,7 +38,7 @@ enum UserServiceError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .handleTaken: return L10n.tr("That handle is already taken in mock data.")
+        case .handleTaken: return L10n.tr("That handle is already taken.")
         case .handleTooShort: return L10n.tr("Handle must be at least 3 characters.")
         }
     }
@@ -62,9 +46,36 @@ enum UserServiceError: LocalizedError {
 
 final class MockUserService: UserService {
     private var claimedHandles: Set<String> = ["pixelmia", "alexbeads", "junmakes"]
+    private let defaults: UserDefaults
+    private let icloud: iCloudPreferencesStore?
+    private let userKey = "PB_persisted_user"
+    private let icloudUserKey = "sync.user-profile"
+
+    init(defaults: UserDefaults = .standard, icloud: iCloudPreferencesStore? = nil) {
+        self.defaults = defaults
+        self.icloud = icloud
+    }
 
     func bootstrapGuestUser() -> User {
-        MockData.guestUser
+        // Check iCloud first for profile from another device
+        if let icloud, let data = icloud.data(forKey: icloudUserKey),
+           let saved = try? JSONDecoder().decode(User.self, from: data) {
+            // Seed local defaults
+            defaults.set(data, forKey: userKey)
+            return saved
+        }
+        if let data = defaults.data(forKey: userKey),
+           let saved = try? JSONDecoder().decode(User.self, from: data) {
+            return saved
+        }
+        return MockData.guestUser
+    }
+
+    func persist(_ user: User) {
+        if let data = try? JSONEncoder().encode(user) {
+            defaults.set(data, forKey: userKey)
+            icloud?.set(data, forKey: icloudUserKey)
+        }
     }
 
     func isHandleAvailable(_ handle: String, excluding user: User) -> Bool {
@@ -95,12 +106,14 @@ final class MockUserService: UserService {
         updated.publicHandle = normalized
         updated.isGuest = false
         updated.isClaimed = true
+        persist(updated)
         return updated
     }
 
     func updateAvatar(_ avatar: Avatar, for user: User) -> User {
         var updated = user
         updated.avatar = avatar
+        persist(updated)
         return updated
     }
 
@@ -108,186 +121,8 @@ final class MockUserService: UserService {
         var updated = user
         let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.displayName = trimmed.isEmpty ? user.displayName : trimmed
+        persist(updated)
         return updated
-    }
-}
-
-struct MockExploreService: ExploreService {
-    private let pageSize = 20
-
-    func fetchPatterns(
-        sort: ExploreSortMode,
-        filters: ExploreFilters,
-        page: Int,
-        pageSize: Int,
-        forceRefresh: Bool
-    ) async throws -> ExploreFeedSnapshot {
-        let allFiltered = Self.apply(filters: filters, sort: sort, to: MockData.explorePatterns)
-        let start = page * pageSize
-        let end = min(start + pageSize, allFiltered.count)
-        let patterns = start < allFiltered.count ? Array(allFiltered[start..<end]) : []
-        return ExploreFeedSnapshot(patterns: patterns, source: .localFallback, hasMore: end < allFiltered.count)
-    }
-
-    func relatedPatterns(for pattern: Pattern, limit: Int) async throws -> [Pattern] {
-        Array(
-            MockData.explorePatterns
-                .filter { $0.authorName == pattern.authorName && $0.id != pattern.id }
-                .prefix(limit)
-        )
-    }
-
-    private static func apply(filters: ExploreFilters, sort: ExploreSortMode, to patterns: [Pattern]) -> [Pattern] {
-        let filtered = patterns.filter { pattern in
-            let themeMatches = filters.theme.map { pattern.theme == $0 } ?? true
-            let difficultyMatches = filters.difficulty.map { pattern.difficulty == $0 } ?? true
-            let sizeMatches = filters.sizeTier.map { pattern.sizeTier == $0 } ?? true
-            return themeMatches && difficultyMatches && sizeMatches
-        }
-
-        return filtered.sorted { lhs, rhs in
-            switch sort {
-            case .weekly:
-                let lhsScore = lhs.weekSaveCount ?? lhs.saveCount
-                let rhsScore = rhs.weekSaveCount ?? rhs.saveCount
-                if lhsScore == rhsScore {
-                    return lhs.createdAt > rhs.createdAt
-                }
-                return lhsScore > rhsScore
-            case .allTime:
-                if lhs.saveCount == rhs.saveCount {
-                    return lhs.createdAt > rhs.createdAt
-                }
-                return lhs.saveCount > rhs.saveCount
-            }
-        }
-    }
-}
-
-final class MockPatternService: PatternService {
-    private var explorePatterns: [Pattern]
-    private var draftsByUser: [UUID: [Pattern]]
-    private var savedByUser: [UUID: [Pattern]]
-    private var publishedByUser: [UUID: [Pattern]]
-
-    init() {
-        self.explorePatterns = MockData.explorePatterns
-        self.draftsByUser = [:]
-        self.savedByUser = [MockData.guestUser.id: [MockData.explorePatterns[0]]]
-        self.publishedByUser = [MockData.guestUser.id: []]
-    }
-
-    func fetchExplorePatterns() -> [Pattern] {
-        explorePatterns.sorted { $0.createdAt > $1.createdAt }
-    }
-
-    func fetchLibraryContent(for user: User) -> LibraryContent {
-        LibraryContent(
-            drafts: draftsByUser[user.id, default: []],
-            saved: savedByUser[user.id, default: []],
-            published: publishedByUser[user.id, default: []]
-        )
-    }
-
-    func createBlankPattern(for user: User) -> Pattern {
-        MockData.blankPattern(authorName: user.displayName)
-    }
-
-    func saveDraft(_ pattern: Pattern, for user: User) -> Pattern {
-        guard !isEmptyDraft(pattern) else { return pattern }
-
-        var draft = pattern
-        draft.authorName = user.displayName
-        draft.status = .draft
-        draft.visibility = .private
-        if let duplicate = draftsByUser[user.id, default: []].first(where: {
-            $0.id != draft.id && draftContentSignature($0) == draftContentSignature(draft)
-        }) {
-            return duplicate
-        }
-        upsert(&draftsByUser[user.id, default: []], pattern: draft)
-        return draft
-    }
-
-    func publish(_ pattern: Pattern, for user: User) -> Pattern {
-        var published = pattern
-        published.authorName = user.displayName
-        published.status = .final
-        published.visibility = .public
-        upsert(&publishedByUser[user.id, default: []], pattern: published)
-        upsert(&explorePatterns, pattern: published)
-        draftsByUser[user.id, default: []].removeAll { $0.id == pattern.id }
-        return published
-    }
-
-    func savePattern(_ pattern: Pattern, for user: User) {
-        var saved = pattern
-        saved.saveCount += 1
-        upsert(&savedByUser[user.id, default: []], pattern: saved)
-    }
-
-    func removeSavedPattern(id: UUID, for user: User) {
-        savedByUser[user.id, default: []].removeAll { $0.id == id }
-    }
-
-    func remix(_ pattern: Pattern, for user: User) -> Pattern {
-        var remix = pattern
-        remix.id = UUID()
-        remix.title = L10n.tr("%@ Remix", pattern.title)
-        remix.authorName = user.displayName
-        remix.status = .draft
-        remix.visibility = .private
-        remix.createdAt = .now
-        upsert(&draftsByUser[user.id, default: []], pattern: remix)
-        return remix
-    }
-
-    func avatarEligiblePatterns(for user: User) -> [Pattern] {
-        let library = fetchLibraryContent(for: user)
-        return library.published
-            .filter { $0.isSquare && $0.status == .final }
-    }
-
-    private func upsert(_ patterns: inout [Pattern], pattern: Pattern) {
-        if let index = patterns.firstIndex(where: { $0.id == pattern.id }) {
-            patterns[index] = pattern
-        } else {
-            patterns.insert(pattern, at: 0)
-        }
-    }
-
-    private func isEmptyDraft(_ pattern: Pattern) -> Bool {
-        pattern.pixels.allSatisfy { $0.colorHex == nil }
-    }
-
-    private func draftContentSignature(_ pattern: Pattern) -> String {
-        let pixels = pattern.pixels
-            .compactMap { pixel -> String? in
-                guard let colorHex = pixel.colorHex else { return nil }
-                return "\(pixel.x),\(pixel.y),\(colorHex.uppercased())"
-            }
-            .sorted()
-            .joined(separator: "|")
-        return "\(pattern.width)x\(pattern.height):\(pixels)"
-    }
-}
-
-final class MockCommunityService: CommunityService {
-    private let savedPatternStore = SavedPatternStore()
-
-    func savedPatternIDs(deviceID: String) -> Set<UUID> {
-        savedPatternStore.savedPatternIDs(for: deviceID)
-    }
-
-    func toggleSave(pattern: Pattern, deviceID: String) async throws -> Set<UUID> {
-        var saves = savedPatternStore.savedPatternIDs(for: deviceID)
-        if saves.contains(pattern.id) {
-            saves.remove(pattern.id)
-        } else {
-            saves.insert(pattern.id)
-        }
-        savedPatternStore.setSavedPatternIDs(saves, for: deviceID)
-        return saves
     }
 }
 
@@ -315,8 +150,10 @@ final class MockExportService: ExportService {
 
 enum PhotoLibrarySaver {
     static func saveFinishedPNG(pattern: Pattern, completion: @escaping (PhotoSaveStatus) -> Void) {
-        let image = PatternImageRenderer.finishedImage(for: pattern, cellSize: 22, scale: 3)
+        saveImage(PatternImageRenderer.finishedImage(for: pattern, cellSize: 22, scale: 3), completion: completion)
+    }
 
+    static func saveImage(_ image: UIImage, completion: @escaping (PhotoSaveStatus) -> Void) {
         PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.creationRequestForAsset(from: image)
         } completionHandler: { success, error in

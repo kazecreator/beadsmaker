@@ -58,7 +58,7 @@ extension View {
             .toolbarBackground(PixelBeadsTheme.surface, for: .tabBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(.visible, for: .tabBar)
-            .tint(PixelBeadsTheme.coral)
+            .tint(PixelBeadsTheme.ink)
     }
 }
 
@@ -98,13 +98,13 @@ struct PBChip: View {
     var body: some View {
         Text(L10n.tr(title))
             .font(.caption.weight(.semibold))
-            .foregroundStyle(accent ? PixelBeadsTheme.coral : PixelBeadsTheme.ink)
+            .foregroundStyle(PixelBeadsTheme.ink)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(accent ? PixelBeadsTheme.coral.opacity(0.12) : Color.white)
+            .background(accent ? PixelBeadsTheme.muted : Color.white)
             .overlay(
                 RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.chip, style: .continuous)
-                    .stroke(accent ? PixelBeadsTheme.coral.opacity(0.2) : PixelBeadsTheme.outline, lineWidth: 1)
+                    .stroke(accent ? PixelBeadsTheme.outline : PixelBeadsTheme.outline, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.chip, style: .continuous))
     }
