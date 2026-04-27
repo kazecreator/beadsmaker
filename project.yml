@@ -27,11 +27,7 @@ targets:
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
-        NSCameraUsageDescription: Camera access is used to scan pattern QR codes.
-        NSPhotoLibraryAddUsageDescription: Photo library access is used to save QR code images.
-        NSPhotoLibraryUsageDescription: Photo library access is used to read QR code images.
-        PB_SUPABASE_URL: $(SUPABASE_URL_SCHEME)://$(SUPABASE_URL_HOST)
-        PB_SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
+        NSPhotoLibraryAddUsageDescription: Photo library access is used to save finished PNG exports.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

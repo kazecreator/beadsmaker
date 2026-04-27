@@ -1,4 +1,2 @@
 "CFBundleDisplayName" = "PixelBeads";
-"NSCameraUsageDescription" = "需要相机权限来扫描图纸二维码";
 "NSPhotoLibraryAddUsageDescription" = "需要相册权限来保存成品 PNG";
-"NSPhotoLibraryUsageDescription" = "需要相册权限来保存成品 PNG";

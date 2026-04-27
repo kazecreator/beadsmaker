@@ -20,16 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera access is used to scan pattern QR codes.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Photo library access is used to save QR code images.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Photo library access is used to read QR code images.</string>
-	<key>PB_SUPABASE_ANON_KEY</key>
-	<string>$(SUPABASE_ANON_KEY)</string>
-	<key>PB_SUPABASE_URL</key>
-	<string>$(SUPABASE_URL_SCHEME)://$(SUPABASE_URL_HOST)</string>
+	<string>Photo library access is used to save finished PNG exports.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

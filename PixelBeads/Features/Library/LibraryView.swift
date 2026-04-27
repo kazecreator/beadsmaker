@@ -13,12 +13,14 @@ struct LibraryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
-                        ForEach(LibrarySegment.allCases) { segment in
-                            Text(segment.title).tag(segment)
+                    if AppFeatureFlags.communityEnabled {
+                        Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
+                            ForEach(LibrarySegment.allCases) { segment in
+                                Text(segment.title).tag(segment)
+                            }
                         }
+                        .pickerStyle(.segmented)
                     }
-                    .pickerStyle(.segmented)
 
                     if libraryStore.displayedPatterns.isEmpty {
                         emptyState
@@ -153,7 +155,9 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(L10n.tr("Nothing here yet"))
                 .font(.headline)
-            Text(L10n.tr("Saved patterns, drafts, and published work appear here automatically."))
+            Text(AppFeatureFlags.communityEnabled
+                ? L10n.tr("Saved patterns, drafts, and published work appear here automatically.")
+                : L10n.tr("Drafts appear here automatically."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

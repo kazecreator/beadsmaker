@@ -193,6 +193,11 @@ enum LibrarySegment: String, CaseIterable, Identifiable {
     case published
 
     var id: String { rawValue }
+
+    static var allCases: [LibrarySegment] {
+        AppFeatureFlags.communityEnabled ? [.drafts, .saved, .published] : [.drafts]
+    }
+
     var title: String {
         switch self {
         case .drafts: return L10n.tr("Drafts")

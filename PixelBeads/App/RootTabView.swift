@@ -7,20 +7,22 @@ struct RootTabView: View {
     @ObservedObject var libraryStore: LibraryStore
     @ObservedObject var profileStore: ProfileStore
 
-    @State private var selection: AppTab = .explore
+    @State private var selection: AppTab = .create
     private let deviceID = DeviceIdentity.deviceID
 
     var body: some View {
         TabView(selection: $selection) {
-            ExploreView(
-                sessionStore: sessionStore,
-                exploreStore: exploreStore,
-                createStore: createStore,
-                libraryStore: libraryStore,
-                selectedTab: $selection
-            )
-            .tabItem { Label("Explore", systemImage: "safari") }
-            .tag(AppTab.explore)
+            if AppFeatureFlags.communityEnabled {
+                ExploreView(
+                    sessionStore: sessionStore,
+                    exploreStore: exploreStore,
+                    createStore: createStore,
+                    libraryStore: libraryStore,
+                    selectedTab: $selection
+                )
+                .tabItem { Label("Explore", systemImage: "safari") }
+                .tag(AppTab.explore)
+            }
 
             CreateView(
                 sessionStore: sessionStore,
@@ -58,7 +60,9 @@ struct RootTabView: View {
 
     private func reloadStores() async {
         let user = sessionStore.currentUser
-        await exploreStore.load(for: user, deviceID: deviceID)
+        if AppFeatureFlags.communityEnabled {
+            await exploreStore.load(for: user, deviceID: deviceID)
+        }
         libraryStore.load(for: user)
         profileStore.load(for: user)
     }

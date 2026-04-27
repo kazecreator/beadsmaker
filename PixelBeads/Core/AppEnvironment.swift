@@ -48,3 +48,8 @@ enum AppEnvironment {
         return trimmed
     }
 }
+
+enum AppFeatureFlags {
+    static let communityEnabled = false
+    static let backendEnabled = false
+}

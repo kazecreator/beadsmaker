@@ -39,7 +39,7 @@ struct PreviewView: View {
                     .buttonStyle(SecondaryButtonStyle())
                 }
 
-                if isPublished {
+                if AppFeatureFlags.communityEnabled, isPublished {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
@@ -49,7 +49,7 @@ struct PreviewView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                } else {
+                } else if AppFeatureFlags.communityEnabled {
                     Button {
                         let success = createStore.publishAndFinalize(user: sessionStore.currentUser)
                         if success {
@@ -84,10 +84,11 @@ struct PreviewView: View {
         }
         .sheet(isPresented: $isShowingPaywall) {
             PaywallView(sessionStore: sessionStore) {
-                // After upgrade, attempt the publish automatically.
-                let success = createStore.publishAndFinalize(user: sessionStore.currentUser)
-                if success {
-                    libraryStore.load(for: sessionStore.currentUser)
+                if AppFeatureFlags.communityEnabled {
+                    let success = createStore.publishAndFinalize(user: sessionStore.currentUser)
+                    if success {
+                        libraryStore.load(for: sessionStore.currentUser)
+                    }
                 }
             }
             .environmentObject(proStatusManager)

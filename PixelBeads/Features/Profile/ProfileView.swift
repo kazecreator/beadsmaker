@@ -22,11 +22,13 @@ struct ProfileView: View {
                         upgradeCard
                     }
                     identityCard
-                    if sessionStore.currentUser.isPro {
+                    if AppFeatureFlags.backendEnabled, sessionStore.currentUser.isPro {
                         appleAccountCard
                     }
                     avatarCard
-                    publishedPatternsSection
+                    if AppFeatureFlags.communityEnabled {
+                        publishedPatternsSection
+                    }
                     #if DEBUG
                     debugResetCard
                     #endif
@@ -85,7 +87,7 @@ struct ProfileView: View {
                     .font(.headline)
                     .foregroundStyle(PixelBeadsTheme.ink)
             }
-            Text(L10n.tr("Publish patterns, get unlimited drafts, and sync via iCloud for just ¥6."))
+            Text(L10n.tr("Unlock unlimited drafts and iCloud sync for just ¥6."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Button {

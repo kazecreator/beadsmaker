@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Paywall shown when a guest user tries to publish or hits the draft limit.
-/// Handles StoreKit purchase and then triggers Apple Sign In.
+/// Paywall shown when a guest user hits the draft limit.
+/// Handles StoreKit purchase and only links an account when backend features are enabled.
 struct PaywallView: View {
     @ObservedObject var sessionStore: AppSessionStore
     @EnvironmentObject private var proStatusManager: ProStatusManager
@@ -83,8 +83,10 @@ struct PaywallView: View {
                 .font(.headline)
                 .foregroundStyle(PixelBeadsTheme.ink)
 
-            featureRow(icon: "globe", title: L10n.tr("Publish patterns"),
-                       detail: L10n.tr("Share your pixel art with the community"))
+            if AppFeatureFlags.communityEnabled {
+                featureRow(icon: "globe", title: L10n.tr("Publish patterns"),
+                           detail: L10n.tr("Share your pixel art with the community"))
+            }
             featureRow(icon: "doc.on.doc", title: L10n.tr("Unlimited drafts"),
                        detail: L10n.tr("No more 20-draft ceiling"))
             featureRow(icon: "icloud", title: L10n.tr("iCloud sync"),
@@ -162,8 +164,7 @@ struct PaywallView: View {
         case .success:
             // Immediately reflect Pro status in the session.
             sessionStore.upgradeToPro()
-            // Trigger Apple Sign In to link the account.
-            await triggerAppleSignIn()
+            await finishUpgrade()
 
         case .pending:
             // Family sharing / Ask to Buy — dismiss and wait for transaction update.
@@ -179,7 +180,16 @@ struct PaywallView: View {
         await proStatusManager.restorePurchases()
         if proStatusManager.isPro {
             sessionStore.upgradeToPro()
+            await finishUpgrade()
+        }
+    }
+
+    private func finishUpgrade() async {
+        if AppFeatureFlags.backendEnabled {
             await triggerAppleSignIn()
+        } else {
+            onUpgradeComplete?()
+            dismiss()
         }
     }
 

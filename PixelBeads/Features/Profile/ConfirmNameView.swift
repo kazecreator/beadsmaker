@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Shown immediately after Apple Sign In completes.
-/// Lets the user confirm or edit the display name that will be stored in Supabase.
+/// Lets the user confirm or edit the display name for account-backed features.
 struct ConfirmNameView: View {
     @ObservedObject var sessionStore: AppSessionStore
     let appleSignInResult: AppleSignInResult
@@ -113,15 +113,16 @@ struct ConfirmNameView: View {
         saveError = nil
         defer { isSaving = false }
 
-        // Upsert to Supabase (best-effort — local state is the source of truth).
-        do {
-            try await appleSignInManager.upsertProfile(
-                appleUserID: appleSignInResult.appleUserID,
-                displayName: trimmed
-            )
-        } catch {
-            // Non-fatal: local state still reflects the Pro purchase.
-            saveError = error.localizedDescription
+        if AppFeatureFlags.backendEnabled {
+            do {
+                try await appleSignInManager.upsertProfile(
+                    appleUserID: appleSignInResult.appleUserID,
+                    displayName: trimmed
+                )
+            } catch {
+                // Non-fatal: local state still reflects the Pro purchase.
+                saveError = error.localizedDescription
+            }
         }
 
         // Update local session regardless of Supabase outcome.

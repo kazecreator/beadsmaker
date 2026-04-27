@@ -14,7 +14,9 @@ struct AvatarPickerView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     stylePicker
                     presetGrid
-                    patternSection
+                    if AppFeatureFlags.communityEnabled {
+                        patternSection
+                    }
                 }
                 .padding(16)
             }
