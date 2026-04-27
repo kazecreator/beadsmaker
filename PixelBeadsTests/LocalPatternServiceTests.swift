@@ -43,6 +43,7 @@ final class LocalPatternServiceTests: XCTestCase {
             var pattern = service.createBlankPattern(for: user)
             pattern.id = UUID()
             pattern.title = "Draft \(index)"
+            pattern.pixels = [PatternPixel(x: index, y: 0, colorHex: "#111111")]
             _ = service.saveDraft(pattern, for: user)
         }
 

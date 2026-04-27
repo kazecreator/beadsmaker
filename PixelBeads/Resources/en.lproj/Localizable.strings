@@ -85,6 +85,8 @@
 "Ocean Charm" = "Ocean Charm";
 "Open Export Sheet" = "Open Export Sheet";
 "Open Preview" = "Open Preview";
+"Add beads before previewing" = "Add beads before previewing";
+"Place at least one bead on the pegboard before opening Preview." = "Place at least one bead on the pegboard before opening Preview.";
 "Paint pixel bead patterns, preview them live, then export or publish." = "Paint pixel bead patterns, preview them live, then export or publish.";
 "Palette" = "Palette";
 "Pattern Detail" = "Pattern Detail";

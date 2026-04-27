@@ -194,10 +194,17 @@ final class MockPatternService: PatternService {
     }
 
     func saveDraft(_ pattern: Pattern, for user: User) -> Pattern {
+        guard !isEmptyDraft(pattern) else { return pattern }
+
         var draft = pattern
         draft.authorName = user.displayName
         draft.status = .draft
         draft.visibility = .private
+        if let duplicate = draftsByUser[user.id, default: []].first(where: {
+            $0.id != draft.id && draftContentSignature($0) == draftContentSignature(draft)
+        }) {
+            return duplicate
+        }
         upsert(&draftsByUser[user.id, default: []], pattern: draft)
         return draft
     }
@@ -247,6 +254,21 @@ final class MockPatternService: PatternService {
         } else {
             patterns.insert(pattern, at: 0)
         }
+    }
+
+    private func isEmptyDraft(_ pattern: Pattern) -> Bool {
+        pattern.pixels.allSatisfy { $0.colorHex == nil }
+    }
+
+    private func draftContentSignature(_ pattern: Pattern) -> String {
+        let pixels = pattern.pixels
+            .compactMap { pixel -> String? in
+                guard let colorHex = pixel.colorHex else { return nil }
+                return "\(pixel.x),\(pixel.y),\(colorHex.uppercased())"
+            }
+            .sorted()
+            .joined(separator: "|")
+        return "\(pattern.width)x\(pattern.height):\(pixels)"
     }
 }
 

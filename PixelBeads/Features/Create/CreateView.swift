@@ -16,6 +16,7 @@ struct CreateView: View {
     @State private var isTrackPointActive = false
     @State private var isShowingResetConfirmation = false
     @State private var isShowingDraftLimitAlert = false
+    @State private var isShowingEmptyPreviewAlert = false
     @State private var isShowingPaywall = false
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: Double = 1.0
@@ -154,6 +155,11 @@ struct CreateView: View {
                 Button(L10n.tr("Not Now"), role: .cancel) { }
             } message: {
                 Text(L10n.tr("You've reached the 20-draft limit. Delete a draft to make room, or upgrade to Pro for unlimited drafts."))
+            }
+            .alert(L10n.tr("Add beads before previewing"), isPresented: $isShowingEmptyPreviewAlert) {
+                Button(L10n.tr("OK"), role: .cancel) { }
+            } message: {
+                Text(L10n.tr("Place at least one bead on the pegboard before opening Preview."))
             }
             .sheet(isPresented: $isShowingPaywall) {
                 PaywallView(sessionStore: sessionStore)
@@ -380,6 +386,7 @@ struct CreateView: View {
             .contentShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.button, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(L10n.tr("Lock"))
     }
 
     private func toolSelectionButton(_ tool: EditorTool) -> some View {
@@ -405,6 +412,7 @@ struct CreateView: View {
             .contentShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.button, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(tool.title)
     }
 
     private var canvasControls: some View {
@@ -660,16 +668,25 @@ struct CreateView: View {
                 libraryStore.selectedSegment = .drafts
                 selectedTab = .library
             } label: {
-                Label("Save Draft", systemImage: "tray.and.arrow.down")
+                Label(L10n.tr("Save Draft"), systemImage: "tray.and.arrow.down")
             }
             .buttonStyle(SecondaryButtonStyle())
 
-            NavigationLink {
-                PreviewView(sessionStore: sessionStore, createStore: createStore, libraryStore: libraryStore)
-            } label: {
-                Label("Open Preview", systemImage: "sparkles.rectangle.stack")
+            if createStore.currentPattern.pixels.contains(where: { $0.colorHex != nil }) {
+                NavigationLink {
+                    PreviewView(sessionStore: sessionStore, createStore: createStore, libraryStore: libraryStore)
+                } label: {
+                    Label(L10n.tr("Open Preview"), systemImage: "sparkles.rectangle.stack")
+                }
+                .buttonStyle(PrimaryButtonStyle())
+            } else {
+                Button {
+                    isShowingEmptyPreviewAlert = true
+                } label: {
+                    Label(L10n.tr("Open Preview"), systemImage: "sparkles.rectangle.stack")
+                }
+                .buttonStyle(PrimaryButtonStyle())
             }
-            .buttonStyle(PrimaryButtonStyle())
         }
     }
 
@@ -696,6 +713,7 @@ struct CreateView: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.42)
+        .accessibilityLabel(L10n.tr(title))
     }
 }
 
@@ -917,7 +935,7 @@ private struct PixelEditorCanvas: View {
     }
 }
 
-private struct TrackPointButton: View {
+struct TrackPointButton: View {
     @Binding var isActive: Bool
     let maxPanStep: CGFloat
     let onPan: (CGSize) -> Void

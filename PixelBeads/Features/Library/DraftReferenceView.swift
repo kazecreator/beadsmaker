@@ -14,6 +14,7 @@ struct DraftReferenceView: View {
     @State private var viewportSize: CGSize = .zero
     @State private var hasInitialized = false
     @State private var isLegendExpanded = true
+    @State private var isTrackPointActive = false
 
     private let minScale: Double = 0.4
     private let maxScale: Double = 5.0
@@ -63,6 +64,20 @@ struct DraftReferenceView: View {
         )
     }
 
+    private var joystickPanStep: CGFloat {
+        guard viewportSize.width > 0, viewportSize.height > 0 else { return 2.4 }
+        let overflow = max(
+            canvasSize.width - viewportSize.width,
+            canvasSize.height - viewportSize.height,
+            0
+        )
+        let viewportBase = max(viewportSize.width, viewportSize.height, 1)
+        let overflowRatio = overflow / viewportBase
+        let scaleProgress = CGFloat((canvasScale - minScale) / (maxScale - minScale))
+        let step = 2.4 + (overflowRatio * 2.2) + (scaleProgress * 1.2)
+        return min(max(step, 2.4), 8.5)
+    }
+
     // MARK: - Color stats
     private var colorStats: [(beadColor: BeadColor?, hex: String, count: Int)] {
         var counts: [String: Int] = [:]
@@ -70,7 +85,7 @@ struct DraftReferenceView: View {
             counts[pixel.colorHex!, default: 0] += 1
         }
         return counts
-            .map { (MockData.beadColor(for: $0.key), $0.key, $0.value) }
+            .map { (MockData.closestBeadColor(for: $0.key), $0.key, $0.value) }
             .sorted { $0.2 > $1.2 }
     }
 
@@ -86,14 +101,6 @@ struct DraftReferenceView: View {
                 )
                 .background(Color(red: 0.96, green: 0.93, blue: 0.86))
                 .gesture(
-                    MagnificationGesture()
-                        .onChanged { value in
-                            let newScale = min(max(canvasScale * value, minScale), maxScale)
-                            canvasScale = newScale
-                            canvasOffset = clampedOffset(canvasOffset, viewport: geo.size)
-                        }
-                )
-                .simultaneousGesture(
                     DragGesture(minimumDistance: 4)
                         .onChanged { value in
                             canvasOffset = clampedOffset(
@@ -113,8 +120,13 @@ struct DraftReferenceView: View {
                     viewportSize = size
                     canvasOffset = clampedOffset(canvasOffset, viewport: size)
                 }
+                .onChange(of: canvasScale) { _, _ in
+                    canvasOffset = clampedOffset(canvasOffset, viewport: viewportSize)
+                }
             }
             .frame(maxHeight: .infinity)
+
+            canvasControls
 
             colorLegendPanel
         }
@@ -147,6 +159,62 @@ struct DraftReferenceView: View {
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .background(Color(red: 0.96, green: 0.93, blue: 0.86).ignoresSafeArea())
         .pbScreen()
+    }
+
+    // MARK: - Canvas controls
+
+    private var canvasControls: some View {
+        ZStack {
+            HStack(spacing: 12) {
+                if !isTrackPointActive {
+                    zoomControl
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
+                }
+
+                Spacer(minLength: 0)
+
+                TrackPointButton(isActive: $isTrackPointActive, maxPanStep: joystickPanStep) { delta in
+                    let newOffset = CGSize(
+                        width: canvasOffset.width + delta.width,
+                        height: canvasOffset.height + delta.height
+                    )
+                    canvasOffset = clampedOffset(newOffset, viewport: viewportSize)
+                }
+                .accessibilityLabel(L10n.tr(isTrackPointActive ? "Pan canvas active" : "Activate pan canvas"))
+
+                if isTrackPointActive {
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .frame(height: 68)
+        .background(Color(red: 0.96, green: 0.93, blue: 0.86))
+        .overlay(alignment: .top) { Divider() }
+        .animation(.spring(response: 0.36, dampingFraction: 0.82), value: isTrackPointActive)
+    }
+
+    private var zoomControl: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "minus.magnifyingglass")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Slider(value: $canvasScale, in: minScale...maxScale, step: 0.1)
+                .accessibilityLabel(L10n.tr("Zoom"))
+
+            Image(systemName: "plus.magnifyingglass")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(PixelBeadsTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.button, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.button, style: .continuous)
+                .stroke(PixelBeadsTheme.outline, lineWidth: 1)
+        )
     }
 
     // MARK: - Color legend
@@ -208,15 +276,10 @@ struct DraftReferenceView: View {
                     .frame(width: 10, height: 10)
                     .offset(x: -6, y: -6)
             }
-            if let code = stat.beadColor?.code {
-                Text(code)
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundStyle(PixelBeadsTheme.ink)
-            } else {
-                Text(String(stat.hex.dropFirst()).prefix(4).uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
+            let isExact = stat.beadColor?.hex.caseInsensitiveCompare(stat.hex) == .orderedSame
+            Text(stat.beadColor?.code ?? "")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundStyle(isExact ? PixelBeadsTheme.ink : Color.secondary)
             Text("×\(stat.count)")
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -260,6 +323,14 @@ private struct ReferenceCanvas: View {
             let ch = boardSize.height / CGFloat(pattern.height)
             let colorMap = pattern.pixels.colorMap()
 
+            var codeTable: [String: (code: String, exact: Bool)] = [:]
+            for case let hex? in colorMap.values where codeTable[hex] == nil {
+                if let bead = MockData.closestBeadColor(for: hex) {
+                    let exact = bead.hex.caseInsensitiveCompare(hex) == .orderedSame
+                    codeTable[hex] = (bead.code, exact)
+                }
+            }
+
             // Board background
             context.fill(
                 Path(roundedRect: boardRect, cornerRadius: cw * 0.7),
@@ -279,7 +350,7 @@ private struct ReferenceCanvas: View {
                         width: cw, height: ch
                     )
                     let hex = colorMap["\(col)-\(row)"] ?? nil
-                    drawCell(in: &context, rect: rect, hex: hex, cw: cw, ch: ch)
+                    drawCell(in: &context, rect: rect, hex: hex, codeTable: codeTable, cw: cw, ch: ch)
                     context.stroke(Path(rect), with: .color(Color.black.opacity(0.04)), lineWidth: 0.45)
                 }
             }
@@ -289,7 +360,14 @@ private struct ReferenceCanvas: View {
         .contentShape(Rectangle())
     }
 
-    private func drawCell(in context: inout GraphicsContext, rect: CGRect, hex: String?, cw: CGFloat, ch: CGFloat) {
+    private func drawCell(
+        in context: inout GraphicsContext,
+        rect: CGRect,
+        hex: String?,
+        codeTable: [String: (code: String, exact: Bool)],
+        cw: CGFloat,
+        ch: CGFloat
+    ) {
         let pegRect = rect.insetBy(dx: cw * 0.34, dy: ch * 0.34)
         context.fill(Path(ellipseIn: pegRect.offsetBy(dx: 0, dy: ch * 0.035)), with: .color(Color.black.opacity(0.08)))
         context.fill(Path(ellipseIn: pegRect), with: .color(Color.white.opacity(0.72)))
@@ -303,6 +381,35 @@ private struct ReferenceCanvas: View {
 
         let hl = CGRect(x: rect.minX + cw * 0.18, y: rect.minY + cw * 0.14, width: cw * 0.22, height: ch * 0.12)
         context.fill(Path(ellipseIn: hl), with: .color(Color.white.opacity(0.38)))
+
+        if let hex, let entry = codeTable[hex] {
+            let fontSize = min(max(cw * 0.34, 7.0), 11.0)
+            let outlinePad = max(cw * 0.06, 1.0)
+            let fillOpacity = entry.exact ? 1.0 : 0.80
+            let shadowOpacity = entry.exact ? 0.65 : 0.45
+            let center = CGPoint(x: rect.midX, y: rect.midY + ch * 0.04)
+            let outlineText = Text(entry.code)
+                .font(.system(size: fontSize, weight: .black, design: .monospaced))
+                .foregroundStyle(Color.black.opacity(shadowOpacity))
+
+            for dx in [-outlinePad, outlinePad] {
+                for dy in [-outlinePad, outlinePad] {
+                    context.draw(
+                        outlineText,
+                        at: CGPoint(x: center.x + dx, y: center.y + dy),
+                        anchor: .center
+                    )
+                }
+            }
+
+            context.draw(
+                Text(entry.code)
+                    .font(.system(size: fontSize, weight: .black, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(fillOpacity)),
+                at: center,
+                anchor: .center
+            )
+        }
     }
 
     private func drawCoordinates(in context: inout GraphicsContext, visualRect: CGRect, boardRect: CGRect, cw: CGFloat, ch: CGFloat) {

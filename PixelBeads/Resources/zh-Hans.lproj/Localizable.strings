@@ -85,6 +85,8 @@
 "Ocean Charm" = "海洋小物";
 "Open Export Sheet" = "打开导出面板";
 "Open Preview" = "打开预览";
+"Add beads before previewing" = "请先放置拼豆";
+"Place at least one bead on the pegboard before opening Preview." = "打开预览前，请先在钉板上放置至少一颗拼豆。";
 "Paint pixel bead patterns, preview them live, then export or publish." = "绘制像素拼豆图纸，实时预览，然后导出或发布。";
 "Palette" = "调色板";
 "Pattern Detail" = "图纸详情";

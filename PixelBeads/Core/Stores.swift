@@ -340,20 +340,33 @@ final class CreateStore: ObservableObject {
         currentPattern = next
     }
 
-    func saveDraft(user: User) {
+    @discardableResult
+    func saveDraft(user: User) -> Bool {
+        guard shouldPersistDraft(currentPattern) else { return false }
         currentPattern = patternService.saveDraft(currentPattern, for: user)
+        return true
     }
 
     /// Creates a new blank draft, saving the current one first.
     /// Returns false if the free draft limit (20) would be exceeded.
     @discardableResult
     func startNewDraft(user: User, library: LibraryContent) -> Bool {
+        let shouldSaveCurrentDraft = shouldPersistDraft(currentPattern)
         let isNew = !library.drafts.contains { $0.id == currentPattern.id }
-        let wouldExceedLimit = !user.isPro && isNew && library.drafts.count >= LocalPatternService.maxFreeDrafts
+        let isDuplicate = library.drafts.contains {
+            $0.id != currentPattern.id && draftContentSignature($0) == draftContentSignature(currentPattern)
+        }
+        let wouldExceedLimit = !user.isPro
+            && shouldSaveCurrentDraft
+            && isNew
+            && !isDuplicate
+            && library.drafts.count >= LocalPatternService.maxFreeDrafts
         guard !wouldExceedLimit else { return false }
 
         // Auto-save current work before switching
-        _ = patternService.saveDraft(currentPattern, for: user)
+        if shouldSaveCurrentDraft {
+            _ = patternService.saveDraft(currentPattern, for: user)
+        }
 
         let blank = patternService.createBlankPattern(for: user)
         currentPattern = blank
@@ -407,6 +420,21 @@ final class CreateStore: ObservableObject {
 
     private func cellKey(x: Int, y: Int) -> String {
         "\(x)-\(y)"
+    }
+
+    private func shouldPersistDraft(_ pattern: Pattern) -> Bool {
+        pattern.pixels.contains { $0.colorHex != nil }
+    }
+
+    private func draftContentSignature(_ pattern: Pattern) -> String {
+        let pixels = pattern.pixels
+            .compactMap { pixel -> String? in
+                guard let colorHex = pixel.colorHex else { return nil }
+                return "\(pixel.x),\(pixel.y),\(colorHex.uppercased())"
+            }
+            .sorted()
+            .joined(separator: "|")
+        return "\(pattern.width)x\(pattern.height):\(pixels)"
     }
 }
 

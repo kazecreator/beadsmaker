@@ -315,6 +315,29 @@ enum MockData {
         return mardStandardPalette.first { $0.hex.caseInsensitiveCompare(hex) == .orderedSame }
     }
 
+    static func closestBeadColor(for hex: String?) -> BeadColor? {
+        guard let hex else { return nil }
+        if let exact = beadColor(for: hex) { return exact }
+        guard let (r1, g1, b1) = parseRGB(hex) else { return nil }
+        return mardStandardPalette.min {
+            guard let (ra, ga, ba) = parseRGB($0.hex),
+                  let (rb, gb, bb) = parseRGB($1.hex) else { return true }
+            let da = (r1 - ra) * (r1 - ra) + (g1 - ga) * (g1 - ga) + (b1 - ba) * (b1 - ba)
+            let db = (r1 - rb) * (r1 - rb) + (g1 - gb) * (g1 - gb) + (b1 - bb) * (b1 - bb)
+            return da < db
+        }
+    }
+
+    private static func parseRGB(_ hex: String) -> (Int, Int, Int)? {
+        let value = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+        guard value.count == 6, let number = UInt32(value, radix: 16) else { return nil }
+        return (
+            Int((number >> 16) & 0xFF),
+            Int((number >> 8) & 0xFF),
+            Int(number & 0xFF)
+        )
+    }
+
     static let presetAvatars = [
         PresetAvatarDefinition(id: "coral-cat", title: L10n.tr("Coral Cat"), symbol: "cat.fill"),
         PresetAvatarDefinition(id: "mono-heart", title: L10n.tr("Mono Heart"), symbol: "heart.fill"),

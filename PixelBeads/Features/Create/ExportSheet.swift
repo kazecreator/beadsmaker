@@ -46,7 +46,7 @@ struct ExportSheet: View {
                 Spacer(minLength: 0)
             }
             .padding(16)
-            .navigationTitle("Export PNG")
+            .navigationTitle(L10n.tr("Export PNG"))
             .navigationBarTitleDisplayMode(.inline)
             .pbScreen()
         }

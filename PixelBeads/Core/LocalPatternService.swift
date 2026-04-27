@@ -52,6 +52,8 @@ final class LocalPatternService: PatternService {
     }
 
     func saveDraft(_ pattern: Pattern, for user: User) -> Pattern {
+        guard !isEmptyDraft(pattern) else { return pattern }
+
         var draft = pattern
         draft.authorName = user.displayName
         draft.status = .draft
@@ -60,6 +62,11 @@ final class LocalPatternService: PatternService {
         // Enforce draft limit for non-Pro users (only for new drafts, not updates)
         let existing = load(from: draftsDir)
         let isExisting = existing.contains { $0.id == draft.id }
+        if let duplicate = existing.first(where: {
+            $0.id != draft.id && draftContentSignature($0) == draftContentSignature(draft)
+        }) {
+            return duplicate
+        }
         if !user.isPro, !isExisting, existing.count >= Self.maxFreeDrafts {
             return draft // limit reached — return unchanged, do not persist
         }
@@ -166,5 +173,20 @@ final class LocalPatternService: PatternService {
 
     private func delete(id: UUID, from directory: URL) {
         try? fm.removeItem(at: fileURL(id: id, in: directory))
+    }
+
+    private func isEmptyDraft(_ pattern: Pattern) -> Bool {
+        pattern.pixels.allSatisfy { $0.colorHex == nil }
+    }
+
+    private func draftContentSignature(_ pattern: Pattern) -> String {
+        let pixels = pattern.pixels
+            .compactMap { pixel -> String? in
+                guard let colorHex = pixel.colorHex else { return nil }
+                return "\(pixel.x),\(pixel.y),\(colorHex.uppercased())"
+            }
+            .sorted()
+            .joined(separator: "|")
+        return "\(pattern.width)x\(pattern.height):\(pixels)"
     }
 }
