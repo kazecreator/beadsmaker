@@ -18,13 +18,11 @@ struct AvatarPickerView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     nameEditor
                     presetGrid
-                    if AppFeatureFlags.communityEnabled {
-                        patternSection
-                    }
+                    patternSection
                 }
                 .padding(16)
             }
-            .navigationTitle(L10n.tr("Choose Avatar"))
+            .navigationTitle(L10n.tr("Edit Profile"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -146,7 +144,7 @@ struct AvatarPickerView: View {
                 .font(.headline)
 
             if profileStore.eligiblePatterns.isEmpty {
-                Text(L10n.tr("Publish a square final pattern to unlock pattern-based avatars."))
+                Text(L10n.tr("Create a square work to use it as your avatar."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
@@ -168,7 +166,7 @@ struct AvatarPickerView: View {
                                 Text(pattern.title)
                                     .font(.headline)
                                     .foregroundStyle(PixelBeadsTheme.ink)
-                                Text(L10n.tr("Published square pattern"))
+                                Text(L10n.tr("Square work"))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }

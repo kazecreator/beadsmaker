@@ -500,8 +500,8 @@ final class ProfileStore: ObservableObject {
 
     func load(for user: User) {
         presetAvatars = avatarService.presetAvatars()
-        eligiblePatterns = patternService.avatarEligiblePatterns(for: user)
         libraryContent = patternService.fetchLibraryContent(for: user)
+        eligiblePatterns = allWorks.filter { $0.isAvatarEligibleWork }
         publishedPatterns = libraryContent.published
         shouldShowDataLossRiskBanner = dataLossRiskBannerPolicy.shouldShow(for: user)
     }
@@ -516,7 +516,8 @@ final class ProfileStore: ObservableObject {
     }
 
     func makePatternAvatar(from pattern: Pattern) -> Avatar? {
-        avatarService.makePatternAvatar(from: pattern, style: selectedRenderStyle)
+        guard pattern.isAvatarEligibleWork else { return nil }
+        return Avatar(type: .pattern, presetId: nil, patternId: pattern.id, renderStyle: .bead)
     }
 
     func dismissDataLossRiskBanner() {

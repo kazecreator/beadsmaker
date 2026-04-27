@@ -86,7 +86,9 @@
 "Open Export Sheet" = "打开导出面板";
 "Open Preview" = "打开预览";
 "Add beads before previewing" = "请先放置拼豆";
+"Add beads before saving" = "请先放置拼豆";
 "Place at least one bead on the pegboard before opening Preview." = "打开预览前，请先在钉板上放置至少一颗拼豆。";
+"Place at least one bead on the pegboard before saving a draft." = "保存草稿前，请先在钉板上放置至少一颗拼豆。";
 "Paint pixel bead patterns, preview them live, then export or publish." = "绘制像素拼豆图纸，实时预览，然后导出或发布。";
 "Palette" = "调色板";
 "Pattern Detail" = "图纸详情";
@@ -232,8 +234,12 @@
 "Dismiss data loss reminder" = "关闭数据丢失提醒";
 "Account linked" = "账号已关联";
 "Drafts, saved patterns, and finished work appear here automatically." = "草稿、收藏图纸和成品作品会自动显示在这里。";
+"Create a square work to use it as your avatar." = "创作一个方形作品后即可设为头像。";
+"iCloud sync" = "iCloud 同步";
+"iCloud sync ready" = "iCloud 同步待开启";
 "My Works" = "我的作品";
 "Signed in with Apple" = "已使用 Apple 登录";
+"Square work" = "方形作品";
 "Untitled" = "未命名";
 "Upgrade to Pro" = "升级 Pro";
 "Week" = "周热度";

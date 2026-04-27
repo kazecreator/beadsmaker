@@ -86,7 +86,9 @@
 "Open Export Sheet" = "Open Export Sheet";
 "Open Preview" = "Open Preview";
 "Add beads before previewing" = "Add beads before previewing";
+"Add beads before saving" = "Add beads before saving";
 "Place at least one bead on the pegboard before opening Preview." = "Place at least one bead on the pegboard before opening Preview.";
+"Place at least one bead on the pegboard before saving a draft." = "Place at least one bead on the pegboard before saving a draft.";
 "Paint pixel bead patterns, preview them live, then export or publish." = "Paint pixel bead patterns, preview them live, then export or publish.";
 "Palette" = "Palette";
 "Pattern Detail" = "Pattern Detail";
@@ -188,8 +190,12 @@
 "Dismiss data loss reminder" = "Dismiss data loss reminder";
 "Account linked" = "Account linked";
 "Drafts, saved patterns, and finished work appear here automatically." = "Drafts, saved patterns, and finished work appear here automatically.";
+"Create a square work to use it as your avatar." = "Create a square work to use it as your avatar.";
+"iCloud sync" = "iCloud sync";
+"iCloud sync ready" = "iCloud sync ready";
 "My Works" = "My Works";
 "Signed in with Apple" = "Signed in with Apple";
+"Square work" = "Square work";
 "Untitled" = "Untitled";
 "Upgrade to Pro" = "Upgrade to Pro";
 "Week" = "Week";

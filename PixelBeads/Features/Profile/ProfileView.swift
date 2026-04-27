@@ -22,9 +22,6 @@ struct ProfileView: View {
                     }
                     worksSection
                     legalSection
-                    #if DEBUG
-                    debugResetCard
-                    #endif
                 }
                 .padding(16)
             }
@@ -102,6 +99,11 @@ struct ProfileView: View {
             if sessionStore.currentUser.appleUserID != nil {
                 PBChip(title: L10n.tr("Account linked"), accent: true)
             }
+
+            PBChip(
+                title: sessionStore.currentUser.isPro ? L10n.tr("iCloud sync") : L10n.tr("iCloud sync ready"),
+                accent: sessionStore.currentUser.isPro
+            )
         }
     }
 
@@ -242,21 +244,6 @@ struct ProfileView: View {
         .padding(.vertical, 12)
         .contentShape(Rectangle())
     }
-
-    // MARK: - Debug
-
-    #if DEBUG
-    private var debugResetCard: some View {
-        Button(role: .destructive) {
-            proStatusManager.debugResetPro()
-            sessionStore.debugResetUser()
-        } label: {
-            Label("Reset Pro (Debug)", systemImage: "arrow.counterclockwise")
-        }
-        .buttonStyle(SecondaryButtonStyle())
-        .pbCard()
-    }
-    #endif
 
     // MARK: - Helpers
 

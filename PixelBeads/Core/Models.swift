@@ -352,6 +352,8 @@ struct Pattern: Identifiable, Codable, Hashable {
     var thumbnailURL: URL?
 
     var isSquare: Bool { width == height }
+    var hasPlacedBeads: Bool { pixels.contains { $0.colorHex != nil } }
+    var isAvatarEligibleWork: Bool { isSquare && hasPlacedBeads }
     var sizeTier: PatternSizeTier {
         let shortestSide = min(width, height)
         switch shortestSide {

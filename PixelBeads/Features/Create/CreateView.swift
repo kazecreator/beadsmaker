@@ -17,6 +17,7 @@ struct CreateView: View {
     @State private var isShowingResetConfirmation = false
     @State private var isShowingDraftLimitAlert = false
     @State private var isShowingEmptyPreviewAlert = false
+    @State private var isShowingEmptyDraftAlert = false
     @State private var isShowingPaywall = false
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: Double = 1.0
@@ -160,6 +161,11 @@ struct CreateView: View {
                 Button(L10n.tr("OK"), role: .cancel) { }
             } message: {
                 Text(L10n.tr("Place at least one bead on the pegboard before opening Preview."))
+            }
+            .alert(L10n.tr("Add beads before saving"), isPresented: $isShowingEmptyDraftAlert) {
+                Button(L10n.tr("OK"), role: .cancel) { }
+            } message: {
+                Text(L10n.tr("Place at least one bead on the pegboard before saving a draft."))
             }
             .sheet(isPresented: $isShowingPaywall) {
                 PaywallView(sessionStore: sessionStore)
@@ -663,7 +669,10 @@ struct CreateView: View {
     private var quickActions: some View {
         VStack(spacing: 12) {
             Button {
-                createStore.saveDraft(user: sessionStore.currentUser)
+                guard createStore.saveDraft(user: sessionStore.currentUser) else {
+                    isShowingEmptyDraftAlert = true
+                    return
+                }
                 libraryStore.load(for: sessionStore.currentUser)
                 libraryStore.selectedSegment = .drafts
                 selectedTab = .library
