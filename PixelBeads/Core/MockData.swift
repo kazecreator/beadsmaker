@@ -3,7 +3,7 @@ import Foundation
 struct PresetAvatarDefinition: Hashable {
     let id: String
     let title: String
-    let symbol: String
+    let pattern: Pattern
 }
 
 enum MockData {
@@ -338,17 +338,100 @@ enum MockData {
         )
     }
 
+    private static func presetAvatarPattern(
+        id: String,
+        title: String,
+        rows: [String],
+        colors: [Character: String]
+    ) -> Pattern {
+        let pixels = rows.enumerated().flatMap { y, row in
+            row.enumerated().compactMap { x, character -> PatternPixel? in
+                guard let color = colors[character] else { return nil }
+                return PatternPixel(x: x, y: y, colorHex: color)
+            }
+        }
+
+        return Pattern(
+            id: UUID(uuidString: id) ?? UUID(),
+            title: title,
+            authorName: "PixelBeads",
+            width: rows.first?.count ?? 0,
+            height: rows.count,
+            pixels: pixels,
+            palette: Array(Set(pixels.compactMap(\.colorHex))).sorted(),
+            status: .final,
+            visibility: .private,
+            difficulty: .easy,
+            tags: [],
+            likeCount: 0,
+            saveCount: 0,
+            isRemixable: false,
+            createdAt: .now,
+            theme: .other
+        )
+    }
+
     static let presetAvatars = [
-        PresetAvatarDefinition(id: "coral-cat", title: L10n.tr("Coral Cat"), symbol: "cat.fill"),
-        PresetAvatarDefinition(id: "mono-heart", title: L10n.tr("Mono Heart"), symbol: "heart.fill"),
-        PresetAvatarDefinition(id: "mini-star", title: L10n.tr("Mini Star"), symbol: "star.fill"),
-        PresetAvatarDefinition(id: "pixel-smile", title: L10n.tr("Pixel Smile"), symbol: "face.smiling.fill"),
-        PresetAvatarDefinition(id: "bead-bolt", title: L10n.tr("Bead Bolt"), symbol: "bolt.fill"),
-        PresetAvatarDefinition(id: "leaf-pop", title: L10n.tr("Leaf Pop"), symbol: "leaf.fill"),
-        PresetAvatarDefinition(id: "lucky-clover", title: L10n.tr("Lucky Clover"), symbol: "suit.club.fill"),
-        PresetAvatarDefinition(id: "mini-moon", title: L10n.tr("Mini Moon"), symbol: "moon.stars.fill"),
-        PresetAvatarDefinition(id: "cherry-flame", title: L10n.tr("Cherry Flame"), symbol: "flame.fill"),
-        PresetAvatarDefinition(id: "tiny-sparkle", title: L10n.tr("Tiny Sparkle"), symbol: "sparkles")
+        PresetAvatarDefinition(
+            id: "mono-heart",
+            title: L10n.tr("Mono Heart"),
+            pattern: presetAvatarPattern(
+                id: "00000000-0000-0000-0000-000000000102",
+                title: L10n.tr("Mono Heart"),
+                rows: [
+                    ".RR...RR.",
+                    "RRRR.RRRR",
+                    "RRRRRRRRR",
+                    "RRRRRRRRR",
+                    ".RRRRRRR.",
+                    "..RRRRR..",
+                    "...RRR...",
+                    "....R....",
+                    "........."
+                ],
+                colors: ["R": "#FF5A36"]
+            )
+        ),
+        PresetAvatarDefinition(
+            id: "mini-star",
+            title: L10n.tr("Mini Star"),
+            pattern: presetAvatarPattern(
+                id: "00000000-0000-0000-0000-000000000103",
+                title: L10n.tr("Mini Star"),
+                rows: [
+                    "....Y....",
+                    "...YYY...",
+                    "...YYY...",
+                    "YYYYYYYYY",
+                    ".YYYYYYY.",
+                    "..YYYYY..",
+                    "..YY.YY..",
+                    ".Y.....Y.",
+                    "........."
+                ],
+                colors: ["Y": "#F4C542"]
+            )
+        ),
+        PresetAvatarDefinition(
+            id: "pixel-smile",
+            title: L10n.tr("Pixel Smile"),
+            pattern: presetAvatarPattern(
+                id: "00000000-0000-0000-0000-000000000104",
+                title: L10n.tr("Pixel Smile"),
+                rows: [
+                    "..YYYYY..",
+                    ".YYYYYYY.",
+                    "YYDYYYDYY",
+                    "YYYYYYYYY",
+                    "YYYYYYYYY",
+                    "YYDDDDDYY",
+                    ".YYYYYYY.",
+                    "..YYYYY..",
+                    "........."
+                ],
+                colors: ["Y": "#F4C542", "D": "#111111"]
+            )
+        )
     ]
 
     static let presetAvatarIDs = presetAvatars.map(\.id)

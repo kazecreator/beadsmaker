@@ -6,8 +6,7 @@ struct ProfileView: View {
     @EnvironmentObject private var proStatusManager: ProStatusManager
     @EnvironmentObject private var appleSignInManager: AppleSignInManager
 
-    @State private var isShowingAvatarSheet = false
-    @State private var isShowingEditNameSheet = false
+    @State private var isShowingEditProfileSheet = false
     @State private var isShowingPaywall = false
 
     private let privacyPolicyURL = URL(string: "https://kazecreator.github.io/bead-maker/privacy.html")!
@@ -21,17 +20,7 @@ struct ProfileView: View {
                     if profileStore.shouldShowDataLossRiskBanner {
                         dataLossRiskBanner
                     }
-                    if !sessionStore.currentUser.isPro {
-                        upgradeCard
-                    }
-                    identityCard
-                    if AppFeatureFlags.backendEnabled, sessionStore.currentUser.isPro {
-                        appleAccountCard
-                    }
-                    avatarCard
-                    if AppFeatureFlags.communityEnabled {
-                        publishedPatternsSection
-                    }
+                    worksSection
                     legalSection
                     #if DEBUG
                     debugResetCard
@@ -41,11 +30,8 @@ struct ProfileView: View {
             }
             .navigationTitle(L10n.tr("Profile"))
             .background(PixelBeadsTheme.surface)
-            .sheet(isPresented: $isShowingAvatarSheet) {
+            .sheet(isPresented: $isShowingEditProfileSheet) {
                 AvatarPickerView(sessionStore: sessionStore, profileStore: profileStore)
-            }
-            .sheet(isPresented: $isShowingEditNameSheet) {
-                EditNameView(sessionStore: sessionStore)
             }
             .sheet(isPresented: $isShowingPaywall) {
                 PaywallView(sessionStore: sessionStore)
@@ -59,83 +45,90 @@ struct ProfileView: View {
     // MARK: - Header
 
     private var profileHeader: some View {
-        HStack(spacing: 16) {
-            PBAvatarView(image: avatarImage(for: sessionStore.currentUser.avatar), size: 72)
+        HStack(alignment: .top, spacing: 16) {
+            avatarPreview(for: sessionStore.currentUser.avatar, size: 72)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(sessionStore.currentUser.displayName)
                     .font(.title2.bold())
                     .foregroundStyle(PixelBeadsTheme.ink)
-                Text(sessionStore.currentUser.isPro ? L10n.tr("Pro creator") : L10n.tr("Guest creator"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-                PBChip(
-                    title: sessionStore.currentUser.isPro ? "Pro" : "Free",
-                    accent: sessionStore.currentUser.isPro
-                )
+                accountStatusLabel
+
+                statusActions
             }
+
             Spacer()
+
+            Button {
+                isShowingEditProfileSheet = true
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(PixelBeadsTheme.ink)
+                    .frame(width: 34, height: 34)
+                    .background(PixelBeadsTheme.surface)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L10n.tr("Edit Profile"))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .pbCard()
     }
 
-    // MARK: - Upgrade CTA (free users only)
-
-    private var upgradeCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "crown.fill")
-                    .foregroundStyle(PixelBeadsTheme.coral)
-                Text(L10n.tr("Unlock Pro"))
-                    .font(.headline)
-                    .foregroundStyle(PixelBeadsTheme.ink)
+    private var statusActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                statusChips
+                upgradeButton
             }
-            Text(L10n.tr("Unlock unlimited drafts and iCloud sync for just ¥6."))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                statusChips
+                upgradeButton
+            }
+        }
+    }
+
+    private var statusChips: some View {
+        HStack(spacing: 8) {
+            PBChip(
+                title: sessionStore.currentUser.isPro ? L10n.tr("Pro") : L10n.tr("Free"),
+                accent: sessionStore.currentUser.isPro
+            )
+
+            if sessionStore.currentUser.appleUserID != nil {
+                PBChip(title: L10n.tr("Account linked"), accent: true)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var upgradeButton: some View {
+        if !sessionStore.currentUser.isPro {
             Button {
                 isShowingPaywall = true
             } label: {
-                Label(L10n.tr("Upgrade to Pro — ¥6"), systemImage: "crown")
-            }
-            .buttonStyle(PrimaryButtonStyle())
-        }
-        .pbCard()
-    }
-
-    // MARK: - Apple Account (Pro users only)
-
-    private var appleAccountCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.tr("Account"))
-                .font(.headline)
-                .foregroundStyle(PixelBeadsTheme.ink)
-
-            HStack(spacing: 10) {
-                Image(systemName: "apple.logo")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(PixelBeadsTheme.ink)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.tr("Signed in with Apple"))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(PixelBeadsTheme.ink)
-                    if let appleUserID = sessionStore.currentUser.appleUserID {
-                        Text(String(appleUserID.prefix(24)) + "…")
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(L10n.tr("Account linked"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: "crown")
+                    Text(L10n.tr("Upgrade to Pro"))
+                        .lineLimit(1)
+                    if let price = proStatusManager.product?.displayPrice {
+                        Text(price)
+                            .lineLimit(1)
                     }
                 }
-                Spacer()
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(PixelBeadsTheme.ink)
+                .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.chip, style: .continuous))
             }
+            .buttonStyle(.plain)
         }
-        .pbCard()
     }
 
     // MARK: - Identity
@@ -175,71 +168,37 @@ struct ProfileView: View {
         .pbCard()
     }
 
-    private var identityCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.tr("Identity"))
-                .font(.headline)
+    // MARK: - Works
 
-            identityRow(label: L10n.tr("Display Name"), value: sessionStore.currentUser.displayName)
-
-            Button {
-                isShowingEditNameSheet = true
-            } label: {
-                Label(L10n.tr("Edit Name"), systemImage: "pencil")
+    private var worksSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(L10n.tr("My Works"))
+                    .font(.headline)
+                Spacer()
+                if !profileStore.allWorks.isEmpty {
+                    Text("\(profileStore.allWorks.count)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
             }
-            .buttonStyle(SecondaryButtonStyle())
-        }
-        .pbCard()
-    }
 
-    // MARK: - Avatar
-
-    private var avatarCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.tr("Avatar"))
-                .font(.headline)
-
-            Button {
-                isShowingAvatarSheet = true
-            } label: {
-                Label(L10n.tr("Choose Avatar"), systemImage: "square.grid.2x2")
-            }
-            .buttonStyle(SecondaryButtonStyle())
-        }
-        .pbCard()
-    }
-
-    // MARK: - Published Patterns
-
-    private var publishedPatternsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.tr("Published Patterns"))
-                .font(.headline)
-
-            if profileStore.publishedPatterns.isEmpty {
-                Text(L10n.tr("Publish a pattern from Create or Preview to show it here."))
+            if profileStore.allWorks.isEmpty {
+                Text(L10n.tr("Drafts, saved patterns, and finished work appear here automatically."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(profileStore.publishedPatterns) { pattern in
-                    VStack(alignment: .leading, spacing: 12) {
-                        PatternThumbnail(pattern: pattern, mode: .bead, height: 140)
-                        HStack {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(pattern.title)
-                                    .font(.headline)
-                                Text(pattern.theme.title)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            PBChip(title: pattern.difficulty.title, accent: true)
-                        }
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3),
+                    spacing: 20
+                ) {
+                    ForEach(profileStore.allWorks) { pattern in
+                        stickerCell(for: pattern)
                     }
-                    .padding(.vertical, 4)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .pbCard()
     }
 
@@ -301,25 +260,65 @@ struct ProfileView: View {
 
     // MARK: - Helpers
 
-    private func identityRow(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption.weight(.semibold))
+    @ViewBuilder
+    private var accountStatusLabel: some View {
+        if sessionStore.currentUser.appleUserID != nil {
+            Text(L10n.tr("Signed in with Apple"))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.body.weight(.medium))
-                .foregroundStyle(PixelBeadsTheme.ink)
+                .lineLimit(2)
+        } else if !sessionStore.currentUser.isPro {
+            Text(L10n.tr("Guest creator"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
         }
     }
 
-    private func avatarImage(for avatar: Avatar) -> Image {
+    @ViewBuilder
+    private func avatarPreview(for avatar: Avatar, size: CGFloat) -> some View {
         if let presetID = avatar.presetId,
            let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
-            return Image(systemName: preset.symbol)
+            finishedAvatarPreview(for: preset.pattern, size: size)
+        } else if let patternID = avatar.patternId,
+                  let pattern = profileStore.allWorks.first(where: { $0.id == patternID })
+                    ?? profileStore.eligiblePatterns.first(where: { $0.id == patternID }) {
+            finishedAvatarPreview(for: pattern, size: size)
+        } else {
+            PBAvatarView(image: Image(systemName: "person.crop.square"), size: size)
         }
-        if avatar.patternId != nil {
-            return Image(systemName: avatar.renderStyle == .bead ? "circle.grid.3x3.fill" : "square.grid.3x3.fill")
+    }
+
+    private func finishedAvatarPreview(for pattern: Pattern, size: CGFloat) -> some View {
+        Image(uiImage: PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2))
+            .resizable()
+            .interpolation(.none)
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .padding(8)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.card, style: .continuous)
+                    .stroke(PixelBeadsTheme.outline, lineWidth: 1)
+            )
+    }
+
+    private func stickerCell(for pattern: Pattern) -> some View {
+        VStack(spacing: 6) {
+            Image(uiImage: PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2))
+                .resizable()
+                .interpolation(.none)
+                .scaledToFit()
+                .frame(minHeight: 64)
+                .shadow(color: .black.opacity(0.10), radius: 4, y: 3)
+
+            Text(pattern.title.isEmpty ? L10n.tr("Untitled") : pattern.title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
-        return Image(systemName: "person.crop.square")
     }
 }

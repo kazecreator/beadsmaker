@@ -480,6 +480,7 @@ final class ProfileStore: ObservableObject {
     @Published private(set) var presetAvatars: [Avatar] = []
     @Published private(set) var eligiblePatterns: [Pattern] = []
     @Published private(set) var publishedPatterns: [Pattern] = []
+    @Published private(set) var libraryContent = LibraryContent(drafts: [], saved: [], published: [])
     @Published private(set) var shouldShowDataLossRiskBanner = false
     @Published var selectedRenderStyle: AvatarRenderStyle = .bead
 
@@ -500,8 +501,18 @@ final class ProfileStore: ObservableObject {
     func load(for user: User) {
         presetAvatars = avatarService.presetAvatars()
         eligiblePatterns = patternService.avatarEligiblePatterns(for: user)
-        publishedPatterns = patternService.fetchLibraryContent(for: user).published
+        libraryContent = patternService.fetchLibraryContent(for: user)
+        publishedPatterns = libraryContent.published
         shouldShowDataLossRiskBanner = dataLossRiskBannerPolicy.shouldShow(for: user)
+    }
+
+    var allWorks: [Pattern] {
+        var seenIDs = Set<UUID>()
+        return (libraryContent.drafts + libraryContent.saved + libraryContent.published).filter { pattern in
+            guard !seenIDs.contains(pattern.id) else { return false }
+            seenIDs.insert(pattern.id)
+            return true
+        }
     }
 
     func makePatternAvatar(from pattern: Pattern) -> Avatar? {

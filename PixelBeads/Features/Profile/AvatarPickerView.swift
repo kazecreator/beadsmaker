@@ -7,12 +7,16 @@ struct AvatarPickerView: View {
     @ObservedObject var profileStore: ProfileStore
 
     @State private var draftAvatar: Avatar?
+    @State private var displayName = ""
+    @FocusState private var isNameFocused: Bool
+
+    private let maxDisplayNameLength = 24
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    stylePicker
+                    nameEditor
                     presetGrid
                     if AppFeatureFlags.communityEnabled {
                         patternSection
@@ -27,34 +31,77 @@ struct AvatarPickerView: View {
                     Button(L10n.tr("Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(L10n.tr("Done")) {
+                    Button(L10n.tr("Save Profile")) {
                         guard var selected = draftAvatar else { return }
-                        selected.renderStyle = profileStore.selectedRenderStyle
+                        selected.renderStyle = .bead
+                        sessionStore.updateDisplayName(trimmedDisplayName)
                         sessionStore.updateAvatar(selected)
                         dismiss()
                     }
-                    .disabled(draftAvatar == nil)
+                    .disabled(!canSave)
                 }
             }
             .onAppear {
                 draftAvatar = sessionStore.currentUser.avatar
-                profileStore.selectedRenderStyle = sessionStore.currentUser.avatar.renderStyle
+                displayName = sessionStore.currentUser.displayName
+                profileStore.selectedRenderStyle = .bead
+            }
+            .onChange(of: displayName) { _, newValue in
+                if newValue.count > maxDisplayNameLength {
+                    displayName = String(newValue.prefix(maxDisplayNameLength))
+                }
             }
             .pbScreen()
         }
     }
 
-    private var stylePicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.tr("Render Style"))
-                .font(.headline)
+    private var nameEditor: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(L10n.tr("Display Name"))
+                    .font(.headline)
+                    .foregroundStyle(PixelBeadsTheme.ink)
 
-            Picker("Render Style", selection: $profileStore.selectedRenderStyle) {
-                ForEach(AvatarRenderStyle.allCases) { style in
-                    Text(style.title).tag(style)
+                Spacer()
+
+                Text("\(displayName.count)/\(maxDisplayNameLength)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                TextField(L10n.tr("Pixel Maker"), text: $displayName)
+                    .textInputAutocapitalization(.words)
+                    .textContentType(.name)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .focused($isNameFocused)
+                    .onSubmit {
+                        isNameFocused = false
+                    }
+
+                if !displayName.isEmpty {
+                    Button {
+                        displayName = ""
+                        isNameFocused = true
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.tr("Clear"))
                 }
             }
-            .pickerStyle(.segmented)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .background(PixelBeadsTheme.surface)
+            .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.button, style: .continuous))
+
+            if AppFeatureFlags.communityEnabled {
+                Text(L10n.tr("Displays on published patterns"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .pbCard()
     }
@@ -66,12 +113,12 @@ struct AvatarPickerView: View {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 12)], spacing: 12) {
                 ForEach(MockData.presetAvatars, id: \.id) { preset in
-                    let avatar = Avatar(type: .preset, presetId: preset.id, patternId: nil, renderStyle: profileStore.selectedRenderStyle)
+                    let avatar = Avatar(type: .preset, presetId: preset.id, patternId: nil, renderStyle: .bead)
                     Button {
                         draftAvatar = avatar
                     } label: {
                         VStack(spacing: 10) {
-                            avatarTile(symbol: preset.symbol)
+                            presetAvatarTile(for: preset.pattern)
                             Text(preset.title)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(PixelBeadsTheme.ink)
@@ -104,13 +151,18 @@ struct AvatarPickerView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(profileStore.eligiblePatterns) { pattern in
-                    let avatar = Avatar(type: .pattern, presetId: nil, patternId: pattern.id, renderStyle: profileStore.selectedRenderStyle)
+                    let avatar = Avatar(type: .pattern, presetId: nil, patternId: pattern.id, renderStyle: .bead)
                     Button {
                         draftAvatar = avatar
                     } label: {
                         HStack(spacing: 14) {
-                            PatternThumbnail(pattern: pattern, mode: profileStore.selectedRenderStyle == .bead ? .bead : .pixel, height: 84)
-                                .frame(width: 84)
+                            Image(uiImage: PatternImageRenderer.finishedImage(for: pattern, cellSize: 12, scale: 2))
+                                .resizable()
+                                .interpolation(.none)
+                                .scaledToFit()
+                                .frame(width: 84, height: 84)
+                                .background(PixelBeadsTheme.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.small, style: .continuous))
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(pattern.title)
@@ -134,13 +186,23 @@ struct AvatarPickerView: View {
         .pbCard()
     }
 
-    private func avatarTile(symbol: String) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 28, weight: .semibold))
-            .foregroundStyle(profileStore.selectedRenderStyle == .bead ? PixelBeadsTheme.coral : PixelBeadsTheme.ink)
+    private func presetAvatarTile(for pattern: Pattern) -> some View {
+        Image(uiImage: PatternImageRenderer.finishedImage(for: pattern, cellSize: 10, scale: 2))
+            .resizable()
+            .interpolation(.none)
+            .scaledToFit()
             .frame(width: 56, height: 56)
-            .background(profileStore.selectedRenderStyle == .bead ? PixelBeadsTheme.coral.opacity(0.12) : PixelBeadsTheme.surface)
+            .padding(4)
+            .background(PixelBeadsTheme.surface)
             .clipShape(RoundedRectangle(cornerRadius: PixelBeadsTheme.Radius.card, style: .continuous))
+    }
+
+    private var trimmedDisplayName: String {
+        displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canSave: Bool {
+        draftAvatar != nil && !trimmedDisplayName.isEmpty
     }
 
     private func isSelected(_ avatar: Avatar) -> Bool {
