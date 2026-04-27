@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B1C2D3E4F5A60718293A4B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0B1C2D3E4F5A60718293A4B4 /* Assets.xcassets */; };
 		B9C0D1E2F3A4B5C6D7E8F9A1 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = B9C0D1E2F3A4B5C6D7E8F9A0 /* Products.storekit */; settings = {ATTRIBUTES = (Debug, ); }; };
 		01D4FFA3C3EC7A1301C09776 /* PatternPixelColorMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9D74A90DAE6BBF1719CEBB /* PatternPixelColorMapTests.swift */; };
 		1A8AF2E8CEB5656F0542E7D7 /* ExplorePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C081C888BE1241AEA9E745 /* ExplorePreferences.swift */; };
@@ -63,6 +64,7 @@
 
 /* Begin PBXFileReference section */
 		0039EE79653896B705B66BAF /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		0B1C2D3E4F5A60718293A4B4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		03CCF22EFF1A85F103C482D0 /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
 		0AF0DB06F690724C398DAB61 /* SupabaseServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseServices.swift; sourceTree = "<group>"; };
 		0D0735B0D15EEC735D2EEA63 /* ExplorePreferencesStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorePreferencesStoreTests.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 		319F5AB81A02CD3D4A73B414 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0B1C2D3E4F5A60718293A4B4 /* Assets.xcassets */,
 				2D2223A85BAA814E234BBD97 /* InfoPlist.strings */,
 				A0A0C4E5494A861B64E6E95F /* Localizable.strings */,
 			);
@@ -365,6 +368,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0B1C2D3E4F5A60718293A4B5 /* Assets.xcassets in Resources */,
 				4AD20E4ED1D4DB88855B1529 /* InfoPlist.strings in Resources */,
 				25890BC99C6C3FC259C1DC8E /* Localizable.strings in Resources */,
 				B9C0D1E2F3A4B5C6D7E8F9A1 /* Products.storekit in Resources */,

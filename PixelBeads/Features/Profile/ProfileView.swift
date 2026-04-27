@@ -10,6 +10,9 @@ struct ProfileView: View {
     @State private var isShowingEditNameSheet = false
     @State private var isShowingPaywall = false
 
+    private let privacyPolicyURL = URL(string: "https://kazecreator.github.io/bead-maker/privacy.html")!
+    private let supportURL = URL(string: "https://kazecreator.github.io/bead-maker/support.html")!
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -29,6 +32,7 @@ struct ProfileView: View {
                     if AppFeatureFlags.communityEnabled {
                         publishedPatternsSection
                     }
+                    legalSection
                     #if DEBUG
                     debugResetCard
                     #endif
@@ -237,6 +241,47 @@ struct ProfileView: View {
             }
         }
         .pbCard()
+    }
+
+    // MARK: - Legal
+
+    private var legalSection: some View {
+        VStack(spacing: 0) {
+            Link(destination: privacyPolicyURL) {
+                legalRow(title: L10n.tr("Privacy Policy"), systemImage: "hand.raised")
+            }
+
+            Divider()
+                .padding(.leading, 48)
+
+            Link(destination: supportURL) {
+                legalRow(title: L10n.tr("Support"), systemImage: "questionmark.circle")
+            }
+        }
+        .pbCard()
+    }
+
+    private func legalRow(title: String, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(PixelBeadsTheme.ink)
+                .frame(width: 36, height: 36)
+                .background(PixelBeadsTheme.canvas)
+                .clipShape(Circle())
+
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(PixelBeadsTheme.ink)
+
+            Spacer()
+
+            Image(systemName: "arrow.up.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Debug
