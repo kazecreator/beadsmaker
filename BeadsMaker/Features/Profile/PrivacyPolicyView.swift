@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
@@ -9,50 +10,30 @@ struct PrivacyPolicyView: View {
         return URL(string: "https://kazecreator.github.io/pixelbeads/\(path).html")!
     }
 
-    private var paragraphs: [String] {
-        L10n.tr("Privacy Policy Body")
-            .components(separatedBy: "\n\n")
-            .filter { !$0.isEmpty }
-    }
-
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                        Text(paragraph)
-                            .font(.body)
-                            .foregroundStyle(BeadsMakerTheme.ink)
-                            .multilineTextAlignment(.leading)
+            WebView(url: privacyURL)
+                .ignoresSafeArea(edges: .bottom)
+                .navigationTitle(L10n.tr("Privacy Policy"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(L10n.tr("Done")) { dismiss() }
                     }
                 }
-                .padding(16)
-
-                Link(destination: privacyURL) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "safari")
-                            .font(.subheadline)
-                        Text("View Online")
-                            .font(.subheadline.weight(.medium))
-                    }
-                    .foregroundStyle(BeadsMakerTheme.ink)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity)
-                    .background(BeadsMakerTheme.canvas)
-                    .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous))
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
-            }
-            .navigationTitle(L10n.tr("Privacy Policy"))
-            .navigationBarTitleDisplayMode(.inline)
-            .background(BeadsMakerTheme.surface)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L10n.tr("Done")) { dismiss() }
-                }
-            }
         }
-        .presentationDetents([.large, .medium])
+        .presentationDetents([.fraction(0.55), .large])
+    }
+}
+
+private struct WebView: UIViewRepresentable {
+    let url: URL
+
+    func makeUIView(context: Context) -> WKWebView {
+        WKWebView()
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        webView.load(URLRequest(url: url))
     }
 }
