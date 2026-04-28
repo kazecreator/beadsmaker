@@ -8,37 +8,57 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f6f0;color:#1a1a1a;line-height:1.7;padding:48px 24px}
 main{max-width:640px;margin:0 auto}
-h1{font-size:28px;font-weight:700;margin-bottom:8px}
-.lang-label{font-size:13px;color:#999;margin-bottom:24px}
-h2{font-size:20px;font-weight:600;margin:32px 0 8px;padding-top:16px;border-top:1px solid #e0ddd6}
-h2:first-of-type{border-top:none;margin-top:24px}
-p{margin-bottom:12px;color:#444}
+h1{font-size:28px;font-weight:700;margin-bottom:24px}
+.tabs{display:flex;gap:0;margin-bottom:28px;border-radius:10px;overflow:hidden;border:1px solid #e0ddd6}
+.tabs button{flex:1;padding:10px 0;font-size:15px;font-weight:500;border:none;cursor:pointer;background:#fff;color:#999;transition:all 0.15s}
+.tabs button.active{background:#1a1a1a;color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+p{margin-bottom:12px;color:#444;font-size:15px}
 a{color:#1a1a1a}
-.back{margin-top:48px;font-size:14px}
+.back{margin-top:48px;font-size:14px;display:block}
 </style>
+<script>
+function switchLang(lang) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + lang).classList.add('active');
+  document.getElementById('btn-' + lang).classList.add('active');
+}
+(function(){
+  var lang = (navigator.language || '').toLowerCase();
+  switchLang(lang.startsWith('zh') ? 'zh' : 'en');
+})();
+</script>
 </head>
 <body>
 <main>
 <h1>Privacy Policy</h1>
-<p class="lang-label">English &middot; 简体中文</p>
 
-<h2>English</h2>
-<p>BeadsMaker does not collect, store, or share any personal information.</p>
-<p>All pattern data, drafts, preferences, and other content you create are stored locally on your device. We do not have access to this data.</p>
-<p>If you enable iCloud Sync, your data is stored in your personal iCloud account and is governed by Apple's privacy policy. You can disable iCloud Sync at any time from the Profile screen.</p>
-<p>We do not use any third-party analytics, tracking, crash reporting, or advertising services.</p>
-<p>BeadsMaker does not knowingly collect any information from children. The app contains no ads and no links to external sites beyond the Feedback email.</p>
-<p>We may update this privacy policy from time to time. Any changes will be reflected on this page.</p>
-<p>If you have any questions or concerns about privacy, please contact us at <a href="mailto:kazecreator@gmail.com">kazecreator@gmail.com</a>.</p>
+<div class="tabs">
+  <button id="btn-en" onclick="switchLang('en')">English</button>
+  <button id="btn-zh" onclick="switchLang('zh')">简体中文</button>
+</div>
 
-<h2>简体中文</h2>
-<p>BeadsMaker 不会收集、存储或分享任何个人信息。</p>
-<p>所有图纸数据、草稿、偏好设置及你创建的其他内容均保存在你的设备本地。我们无法访问这些数据。</p>
-<p>如果你开启 iCloud 同步，数据将存储在你的个人 iCloud 账户中，并受 Apple 隐私政策保护。你可以随时在「我的」页面关闭 iCloud 同步。</p>
-<p>我们不使用任何第三方分析、崩溃报告、追踪或广告服务。</p>
-<p>BeadsMaker 不会有意收集儿童的任何信息。应用内不含广告，也不含除反馈邮件之外的外部链接。</p>
-<p>我们可能会不时更新本隐私政策。任何变更将在此页面反映。</p>
-<p>如果你对隐私有任何疑问或担忧，请通过 <a href="mailto:kazecreator@gmail.com">kazecreator@gmail.com</a> 联系我们。</p>
+<div id="tab-en" class="tab-content">
+  <p>BeadsMaker does not collect, store, or share any personal information.</p>
+  <p>All pattern data, drafts, preferences, and other content you create are stored locally on your device. We do not have access to this data.</p>
+  <p>If you enable iCloud Sync, your data is stored in your personal iCloud account and is governed by Apple's privacy policy. You can disable iCloud Sync at any time from the Profile screen.</p>
+  <p>We do not use any third-party analytics, tracking, crash reporting, or advertising services.</p>
+  <p>BeadsMaker does not knowingly collect any information from children. The app contains no ads and no links to external sites beyond the Feedback email.</p>
+  <p>We may update this privacy policy from time to time. Any changes will be reflected on this page.</p>
+  <p>If you have any questions or concerns about privacy, please contact us at <a href="mailto:kazecreator@gmail.com">kazecreator@gmail.com</a>.</p>
+</div>
+
+<div id="tab-zh" class="tab-content">
+  <p>BeadsMaker 不会收集、存储或分享任何个人信息。</p>
+  <p>所有图纸数据、草稿、偏好设置及你创建的其他内容均保存在你的设备本地。我们无法访问这些数据。</p>
+  <p>如果你开启 iCloud 同步，数据将存储在你的个人 iCloud 账户中，并受 Apple 隐私政策保护。你可以随时在「我的」页面关闭 iCloud 同步。</p>
+  <p>我们不使用任何第三方分析、崩溃报告、追踪或广告服务。</p>
+  <p>BeadsMaker 不会有意收集儿童的任何信息。应用内不含广告，也不含除反馈邮件之外的外部链接。</p>
+  <p>我们可能会不时更新本隐私政策。任何变更将在此页面反映。</p>
+  <p>如果你对隐私有任何疑问或担忧，请通过 <a href="mailto:kazecreator@gmail.com">kazecreator@gmail.com</a> 联系我们。</p>
+</div>
 
 <a class="back" href="index.html">&larr; Back to BeadsMaker</a>
 </main>
