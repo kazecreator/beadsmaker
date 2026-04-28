@@ -237,15 +237,6 @@ struct ProfileView: View {
             Divider()
                 .padding(.leading, 48)
 
-            Button {
-                Task { await proStatusManager.restorePurchases() }
-            } label: {
-                legalRow(title: L10n.tr("Restore Purchase"), systemImage: "arrow.triangle.2.circlepath")
-            }
-
-            Divider()
-                .padding(.leading, 48)
-
             syncRow
 
             Divider()

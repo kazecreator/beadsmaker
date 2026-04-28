@@ -125,6 +125,16 @@ struct ProInfoView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
+
+            Button {
+                Task { await proStatusManager.restorePurchases() }
+            } label: {
+                Text(L10n.tr("Restore Purchase"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(BeadsMakerTheme.ink)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
         }
     }
 
