@@ -10,7 +10,7 @@ struct AvatarPickerView: View {
 
     @State private var draftAvatar: Avatar?
     @State private var displayName = ""
-    @State private var isShowingPaywall = false
+    @State private var isShowingProInfo = false
     @FocusState private var isNameFocused: Bool
 
     private let maxDisplayNameLength = 24
@@ -54,8 +54,8 @@ struct AvatarPickerView: View {
             }
             .pbScreen()
         }
-        .sheet(isPresented: $isShowingPaywall) {
-            PaywallView(sessionStore: sessionStore)
+        .sheet(isPresented: $isShowingProInfo) {
+            ProInfoView(sessionStore: sessionStore)
                 .environmentObject(proStatusManager)
                 .environmentObject(appleSignInManager)
         }
@@ -161,7 +161,7 @@ struct AvatarPickerView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Button {
-                        isShowingPaywall = true
+                        isShowingProInfo = true
                     } label: {
                         Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
                             .frame(maxWidth: .infinity)

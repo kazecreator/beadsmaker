@@ -13,7 +13,7 @@ struct PreviewView: View {
     @State private var isShowingShareSheet = false
     @State private var finishedPattern: Pattern?
     @State private var isDuplicateAlertShown = false
-    @State private var isShowingPaywall = false
+    @State private var isShowingProInfo = false
 
     private var isPublished: Bool {
         createStore.currentPattern.visibility == .public
@@ -65,7 +65,7 @@ struct PreviewView: View {
                         if success {
                             libraryStore.load(for: sessionStore.currentUser)
                         } else {
-                            isShowingPaywall = true
+                        isShowingProInfo = true
                         }
                     } label: {
                         Label(L10n.tr("Publish Pattern"), systemImage: "globe")
@@ -100,17 +100,10 @@ struct PreviewView: View {
                 )
             }
         }
-        .sheet(isPresented: $isShowingPaywall) {
-            PaywallView(sessionStore: sessionStore) {
-                if AppFeatureFlags.communityEnabled {
-                    let success = createStore.publishAndFinalize(user: sessionStore.currentUser)
-                    if success {
-                        libraryStore.load(for: sessionStore.currentUser)
-                    }
-                }
-            }
-            .environmentObject(proStatusManager)
-            .environmentObject(appleSignInManager)
+        .sheet(isPresented: $isShowingProInfo) {
+            ProInfoView(sessionStore: sessionStore)
+                .environmentObject(proStatusManager)
+                .environmentObject(appleSignInManager)
         }
         .pbScreen()
     }

@@ -9,7 +9,6 @@ struct ProfileView: View {
     @EnvironmentObject private var syncManager: iCloudSyncManager
 
     @State private var isShowingEditProfileSheet = false
-    @State private var isShowingPaywall = false
     @State private var isShowingPrivacyPolicy = false
     @State private var isShowingProInfo = false
 
@@ -30,11 +29,6 @@ struct ProfileView: View {
             .background(BeadsMakerTheme.surface)
             .sheet(isPresented: $isShowingEditProfileSheet) {
                 AvatarPickerView(sessionStore: sessionStore, profileStore: profileStore)
-            }
-            .sheet(isPresented: $isShowingPaywall) {
-                PaywallView(sessionStore: sessionStore)
-                    .environmentObject(proStatusManager)
-                    .environmentObject(appleSignInManager)
             }
             .sheet(isPresented: $isShowingPrivacyPolicy) {
                 PrivacyPolicyView()

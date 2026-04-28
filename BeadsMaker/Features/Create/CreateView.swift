@@ -19,7 +19,7 @@ struct CreateView: View {
     @State private var isShowingDraftLimitAlert = false
     @State private var isShowingEmptyPreviewAlert = false
     @State private var isShowingEmptyDraftAlert = false
-    @State private var isShowingPaywall = false
+    @State private var isShowingProInfo = false
     @State private var isShowingImport = false
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: Double = 1.0
@@ -161,7 +161,7 @@ struct CreateView: View {
             }
             .alert(L10n.tr("Draft Limit Reached"), isPresented: $isShowingDraftLimitAlert) {
                 Button(L10n.tr("Upgrade to Pro")) {
-                    isShowingPaywall = true
+                    isShowingProInfo = true
                 }
                 Button(L10n.tr("Not Now"), role: .cancel) { }
             } message: {
@@ -177,8 +177,8 @@ struct CreateView: View {
             } message: {
                 Text(L10n.tr("Place at least one bead on the pegboard before saving a draft."))
             }
-            .sheet(isPresented: $isShowingPaywall) {
-                PaywallView(sessionStore: sessionStore)
+            .sheet(isPresented: $isShowingProInfo) {
+                ProInfoView(sessionStore: sessionStore)
                     .environmentObject(proStatusManager)
                     .environmentObject(appleSignInManager)
             }

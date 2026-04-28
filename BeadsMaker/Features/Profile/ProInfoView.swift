@@ -8,8 +8,6 @@ struct ProInfoView: View {
 
     private var isPro: Bool { sessionStore.currentUser.isPro }
 
-    @State private var isShowingPaywall = false
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -34,11 +32,6 @@ struct ProInfoView: View {
             }
         }
         .presentationDetents([.large])
-        .sheet(isPresented: $isShowingPaywall) {
-            PaywallView(sessionStore: sessionStore)
-                .environmentObject(proStatusManager)
-                .environmentObject(appleSignInManager)
-        }
     }
 
     // MARK: - Hero
@@ -119,22 +112,55 @@ struct ProInfoView: View {
             }
 
             Button {
-                isShowingPaywall = true
+                Task { await handlePurchase() }
             } label: {
-                Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
-                    .frame(maxWidth: .infinity)
+                if proStatusManager.purchaseInProgress {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .tint(.white)
+                } else {
+                    Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+                        .frame(maxWidth: .infinity)
+                }
             }
             .buttonStyle(PrimaryButtonStyle())
+            .disabled(proStatusManager.purchaseInProgress)
 
             Button {
                 Task { await proStatusManager.restorePurchases() }
             } label: {
-                Text(L10n.tr("Restore Purchase"))
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(BeadsMakerTheme.ink)
+                if proStatusManager.restoreInProgress {
+                    ProgressView()
+                } else {
+                    Text(L10n.tr("Restore Purchase"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(BeadsMakerTheme.ink)
+                }
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
+            .disabled(proStatusManager.restoreInProgress)
+
+            if let message = proStatusManager.errorMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(BeadsMakerTheme.ink)
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func handlePurchase() async {
+        let result = await proStatusManager.purchase()
+        switch result {
+        case .success:
+            sessionStore.upgradeToPro()
+            dismiss()
+        case .pending:
+            dismiss()
+        case .userCancelled, .failed:
+            break
         }
     }
 
