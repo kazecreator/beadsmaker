@@ -7,7 +7,7 @@ struct PrivacyPolicyView: View {
     private var privacyURL: URL {
         let lang = Locale.preferredLanguages.first ?? ""
         let path = lang.starts(with: "zh") ? "privacy-zh" : "privacy"
-        return URL(string: "https://kazecreator.github.io/pixelbeads/\(path).html")!
+        return URL(string: "https://kazecreator.github.io/beadsmaker/\(path).html")!
     }
 
     var body: some View {
