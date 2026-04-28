@@ -56,7 +56,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "Apple Development"
         ENABLE_PREVIEWS: YES
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1"
     dependencies: []
   BeadsMakerTests:
     type: bundle.unit-test
