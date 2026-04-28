@@ -22,7 +22,7 @@ struct PrivacyPolicyView: View {
                     }
                 }
         }
-        .presentationDetents([.fraction(0.55), .large])
+        .presentationDetents([.large])
     }
 }
 

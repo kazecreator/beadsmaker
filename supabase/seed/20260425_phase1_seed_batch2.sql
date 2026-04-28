@@ -9,7 +9,7 @@ insert into patterns (
 
 -- animals -----------------------------------------------------------------------
 (
-    'aaaaaaaa-0001-0001-0001-000000000001', null, 'PixelBeads Team',
+    'aaaaaaaa-0001-0001-0001-000000000001', null, 'BeadsMaker Team',
     'Mini Penguin',
     '[{"x":7,"y":3,"colorHex":"#1F1F1F"},{"x":8,"y":3,"colorHex":"#1F1F1F"},{"x":6,"y":4,"colorHex":"#1F1F1F"},{"x":7,"y":4,"colorHex":"#F5F5F5"},{"x":8,"y":4,"colorHex":"#F5F5F5"},{"x":9,"y":4,"colorHex":"#1F1F1F"},{"x":6,"y":5,"colorHex":"#1F1F1F"},{"x":7,"y":5,"colorHex":"#F5F5F5"},{"x":8,"y":5,"colorHex":"#F5F5F5"},{"x":9,"y":5,"colorHex":"#1F1F1F"},{"x":7,"y":6,"colorHex":"#F5A623"},{"x":8,"y":6,"colorHex":"#F5A623"},{"x":6,"y":7,"colorHex":"#F5A623"},{"x":9,"y":7,"colorHex":"#F5A623"}]'::jsonb,
     16, 16, ARRAY['#1F1F1F','#F5F5F5','#F5A623'],
@@ -17,7 +17,7 @@ insert into patterns (
     37, now() - interval '14 days', now() - interval '13 days'
 ),
 (
-    'aaaaaaaa-0002-0002-0002-000000000002', null, 'PixelBeads Team',
+    'aaaaaaaa-0002-0002-0002-000000000002', null, 'BeadsMaker Team',
     'Corgi Face',
     '[{"x":5,"y":4,"colorHex":"#E8A44A"},{"x":6,"y":4,"colorHex":"#E8A44A"},{"x":9,"y":4,"colorHex":"#E8A44A"},{"x":10,"y":4,"colorHex":"#E8A44A"},{"x":5,"y":5,"colorHex":"#E8A44A"},{"x":6,"y":5,"colorHex":"#F5D08C"},{"x":7,"y":5,"colorHex":"#F5D08C"},{"x":8,"y":5,"colorHex":"#F5D08C"},{"x":9,"y":5,"colorHex":"#F5D08C"},{"x":10,"y":5,"colorHex":"#E8A44A"},{"x":6,"y":6,"colorHex":"#F5D08C"},{"x":7,"y":6,"colorHex":"#1F1F1F"},{"x":8,"y":6,"colorHex":"#1F1F1F"},{"x":9,"y":6,"colorHex":"#F5D08C"},{"x":7,"y":7,"colorHex":"#C2856B"},{"x":8,"y":7,"colorHex":"#1F1F1F"}]'::jsonb,
     16, 16, ARRAY['#E8A44A','#F5D08C','#C2856B','#1F1F1F'],

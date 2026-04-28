@@ -1,0 +1,49 @@
+{
+  "identifier" : "com.beadsmaker.storekit",
+  "nonConsumableProducts" : [
+    {
+      "displayPrice" : "6",
+      "familyShareable" : false,
+      "internalID" : "C3D4E5F6-A1B2-C3D4-E5F6-A1B2C3D4E5F6",
+      "localizations" : [
+        {
+          "description" : "Unlock unlimited drafts and iCloud sync.",
+          "displayName" : "BeadsMaker Pro",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "解锁无限草稿数量和 iCloud 同步。",
+          "displayName" : "BeadsMaker Pro",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.beadsmaker.pro",
+      "referenceName" : "BeadsMaker Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_currencyCode" : "CNY",
+    "_locale" : "zh_CN",
+    "_enableAskToBuyInterruptedPurchases" : false,
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "kind" : "Load",
+        "on" : false
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "kind" : "Purchase",
+        "on" : false
+      }
+    ]
+  },
+  "version" : {
+    "major" : 2,
+    "minor" : 0,
+    "patch" : 0
+  }
+}

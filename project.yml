@@ -1,4 +1,4 @@
-name: PixelBeads
+name: BeadsMaker
 options:
   bundleIdPrefix: com.kevinzhang
   deploymentTarget:
@@ -7,17 +7,17 @@ options:
   createIntermediateGroups: true
 
 schemes:
-  PixelBeads:
+  BeadsMaker:
     build:
       targets:
-        PixelBeads: all
-        PixelBeadsTests: [test]
+        BeadsMaker: all
+        BeadsMakerTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - PixelBeadsTests
+        - BeadsMakerTests
     profile:
       config: Release
     analyze:
@@ -27,7 +27,7 @@ schemes:
 
 
 targets:
-  PixelBeads:
+  BeadsMaker:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
@@ -35,11 +35,11 @@ targets:
       Debug: Config/Local.xcconfig
       Release: Config/Local.xcconfig
     sources:
-      - path: PixelBeads
+      - path: BeadsMaker
     info:
-      path: PixelBeads/Info.plist
+      path: BeadsMaker/Info.plist
       properties:
-        CFBundleDisplayName: PixelBeads
+        CFBundleDisplayName: BeadsMaker
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
@@ -51,21 +51,21 @@ targets:
     settings:
       base:
         SWIFT_VERSION: "5.9"
-        PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.pixelbeads
+        PRODUCT_BUNDLE_IDENTIFIER: com.kevinzhang.beadsmaker
         DEVELOPMENT_TEAM: 84SJV77585
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "Apple Development"
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1,2"
     dependencies: []
-  PixelBeadsTests:
+  BeadsMakerTests:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: PixelBeadsTests
+      - path: BeadsMakerTests
     dependencies:
-      - target: PixelBeads
+      - target: BeadsMaker
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES

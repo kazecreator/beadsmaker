@@ -4,7 +4,7 @@ insert into patterns (
 (
     '11111111-1111-1111-1111-111111111111',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Lucky Cat Face',
     '[{"x":7,"y":3,"colorHex":"#1F1F1F"},{"x":8,"y":3,"colorHex":"#1F1F1F"},{"x":5,"y":5,"colorHex":"#1F1F1F"},{"x":10,"y":5,"colorHex":"#1F1F1F"},{"x":6,"y":6,"colorHex":"#F6D6B8"},{"x":7,"y":6,"colorHex":"#F6D6B8"},{"x":8,"y":6,"colorHex":"#F6D6B8"},{"x":9,"y":6,"colorHex":"#F6D6B8"},{"x":6,"y":7,"colorHex":"#F6D6B8"},{"x":7,"y":7,"colorHex":"#FF8FB1"},{"x":8,"y":7,"colorHex":"#FF8FB1"},{"x":9,"y":7,"colorHex":"#F6D6B8"},{"x":7,"y":8,"colorHex":"#1F1F1F"},{"x":8,"y":8,"colorHex":"#1F1F1F"}]'::jsonb,
     16,
@@ -21,7 +21,7 @@ insert into patterns (
 (
     '22222222-2222-2222-2222-222222222222',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Strawberry Slice',
     '[{"x":6,"y":4,"colorHex":"#D83A56"},{"x":7,"y":4,"colorHex":"#D83A56"},{"x":8,"y":4,"colorHex":"#D83A56"},{"x":9,"y":4,"colorHex":"#D83A56"},{"x":5,"y":5,"colorHex":"#D83A56"},{"x":10,"y":5,"colorHex":"#D83A56"},{"x":5,"y":6,"colorHex":"#D83A56"},{"x":10,"y":6,"colorHex":"#D83A56"},{"x":6,"y":7,"colorHex":"#FF6B81"},{"x":7,"y":7,"colorHex":"#FF6B81"},{"x":8,"y":7,"colorHex":"#FF6B81"},{"x":9,"y":7,"colorHex":"#FF6B81"},{"x":6,"y":3,"colorHex":"#5AA469"},{"x":9,"y":3,"colorHex":"#5AA469"}]'::jsonb,
     16,
@@ -38,7 +38,7 @@ insert into patterns (
 (
     '33333333-3333-3333-3333-333333333333',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Forest Mushroom',
     '[{"x":7,"y":4,"colorHex":"#C65D2E"},{"x":8,"y":4,"colorHex":"#C65D2E"},{"x":6,"y":5,"colorHex":"#C65D2E"},{"x":7,"y":5,"colorHex":"#F08A5D"},{"x":8,"y":5,"colorHex":"#F08A5D"},{"x":9,"y":5,"colorHex":"#C65D2E"},{"x":6,"y":6,"colorHex":"#F08A5D"},{"x":7,"y":6,"colorHex":"#FFF1C1"},{"x":8,"y":6,"colorHex":"#FFF1C1"},{"x":9,"y":6,"colorHex":"#F08A5D"},{"x":7,"y":7,"colorHex":"#7A4E2D"},{"x":8,"y":7,"colorHex":"#7A4E2D"},{"x":7,"y":8,"colorHex":"#7A4E2D"},{"x":8,"y":8,"colorHex":"#7A4E2D"}]'::jsonb,
     16,
@@ -55,7 +55,7 @@ insert into patterns (
 (
     '44444444-4444-4444-4444-444444444444',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Retro Heart',
     '[{"x":5,"y":4,"colorHex":"#FF4D6D"},{"x":6,"y":4,"colorHex":"#FF4D6D"},{"x":9,"y":4,"colorHex":"#FF4D6D"},{"x":10,"y":4,"colorHex":"#FF4D6D"},{"x":4,"y":5,"colorHex":"#FF4D6D"},{"x":5,"y":5,"colorHex":"#FF4D6D"},{"x":6,"y":5,"colorHex":"#FF4D6D"},{"x":7,"y":5,"colorHex":"#FF4D6D"},{"x":8,"y":5,"colorHex":"#FF4D6D"},{"x":9,"y":5,"colorHex":"#FF4D6D"},{"x":10,"y":5,"colorHex":"#FF4D6D"},{"x":11,"y":5,"colorHex":"#FF4D6D"},{"x":5,"y":6,"colorHex":"#FF4D6D"},{"x":6,"y":6,"colorHex":"#FF4D6D"},{"x":7,"y":7,"colorHex":"#FF4D6D"},{"x":8,"y":7,"colorHex":"#FF4D6D"}]'::jsonb,
     16,
@@ -72,7 +72,7 @@ insert into patterns (
 (
     '55555555-5555-5555-5555-555555555555',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Magic Slime',
     '[{"x":7,"y":5,"colorHex":"#8B5CF6"},{"x":8,"y":5,"colorHex":"#8B5CF6"},{"x":6,"y":6,"colorHex":"#A78BFA"},{"x":7,"y":6,"colorHex":"#A78BFA"},{"x":8,"y":6,"colorHex":"#A78BFA"},{"x":9,"y":6,"colorHex":"#A78BFA"},{"x":5,"y":7,"colorHex":"#A78BFA"},{"x":6,"y":7,"colorHex":"#C4B5FD"},{"x":7,"y":7,"colorHex":"#C4B5FD"},{"x":8,"y":7,"colorHex":"#C4B5FD"},{"x":9,"y":7,"colorHex":"#C4B5FD"},{"x":10,"y":7,"colorHex":"#A78BFA"},{"x":6,"y":8,"colorHex":"#1F1F1F"},{"x":9,"y":8,"colorHex":"#1F1F1F"}]'::jsonb,
     24,
@@ -89,7 +89,7 @@ insert into patterns (
 (
     '66666666-6666-6666-6666-666666666666',
     null,
-    'PixelBeads Team',
+    'BeadsMaker Team',
     'Pixel Sword',
     '[{"x":8,"y":3,"colorHex":"#C0C7D1"},{"x":8,"y":4,"colorHex":"#E8EDF2"},{"x":8,"y":5,"colorHex":"#E8EDF2"},{"x":8,"y":6,"colorHex":"#E8EDF2"},{"x":8,"y":7,"colorHex":"#E8EDF2"},{"x":8,"y":8,"colorHex":"#E8EDF2"},{"x":8,"y":9,"colorHex":"#7C5C3B"},{"x":8,"y":10,"colorHex":"#7C5C3B"},{"x":7,"y":10,"colorHex":"#B08968"},{"x":9,"y":10,"colorHex":"#B08968"},{"x":7,"y":11,"colorHex":"#7C5C3B"},{"x":8,"y":11,"colorHex":"#7C5C3B"},{"x":9,"y":11,"colorHex":"#7C5C3B"}]'::jsonb,
     24,
