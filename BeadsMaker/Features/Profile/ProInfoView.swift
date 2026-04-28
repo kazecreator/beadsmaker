@@ -33,7 +33,7 @@ struct ProInfoView: View {
                 }
             }
         }
-        .presentationDetents([.fraction(0.82), .large])
+        .presentationDetents([.large])
         .sheet(isPresented: $isShowingPaywall) {
             PaywallView(sessionStore: sessionStore)
                 .environmentObject(proStatusManager)
