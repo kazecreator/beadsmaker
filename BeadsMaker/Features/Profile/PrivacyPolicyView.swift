@@ -3,6 +3,12 @@ import SwiftUI
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
 
+    private var privacyURL: URL {
+        let lang = Locale.preferredLanguages.first ?? ""
+        let path = lang.starts(with: "zh") ? "privacy-zh" : "privacy"
+        return URL(string: "https://kazecreator.github.io/pixelbeads/\(path).html")!
+    }
+
     private var paragraphs: [String] {
         L10n.tr("Privacy Policy Body")
             .components(separatedBy: "\n\n")
@@ -22,7 +28,7 @@ struct PrivacyPolicyView: View {
                 }
                 .padding(16)
 
-                Link(destination: URL(string: "https://kazecreator.github.io/pixelbeads/privacy.html")!) {
+                Link(destination: privacyURL) {
                     HStack(spacing: 8) {
                         Image(systemName: "safari")
                             .font(.subheadline)
