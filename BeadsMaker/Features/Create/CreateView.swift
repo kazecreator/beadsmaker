@@ -204,7 +204,7 @@ struct CreateView: View {
         }
         .sheet(isPresented: $isShowingImport) {
             ImportPatternView(hasExistingDrafts: !libraryStore.content.drafts.isEmpty) { pattern in
-                let remixed = createStore.remixImported(pattern)
+                createStore.remixImported(pattern)
                 libraryStore.load(for: sessionStore.currentUser)
             }
         }
@@ -233,7 +233,7 @@ struct CreateView: View {
         } message: {
             Text(L10n.tr("Changing size will remove beads outside the new area."))
         }
-        .onChange(of: createStore.currentPattern.id) { _ in
+        .onChange(of: createStore.currentPattern.id) {
             canvasOffset = .zero
             canvasScale = 1.0
             hasInitializedCanvasPosition = false

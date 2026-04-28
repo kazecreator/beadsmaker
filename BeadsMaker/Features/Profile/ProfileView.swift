@@ -259,7 +259,9 @@ struct ProfileView: View {
                 .padding(.leading, 48)
 
             Button {
-                SKStoreReviewController.requestReview()
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    SKStoreReviewController.requestReview(in: windowScene)
+                }
             } label: {
                 legalRow(title: L10n.tr("Rate Us"), systemImage: "star")
             }
