@@ -78,7 +78,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
         Task { @MainActor in
             guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let tokenData = credential.identityToken,
-                  let identityToken = String(data: tokenData, encoding: .utf8) else {
+                  let _ = String(data: tokenData, encoding: .utf8) else {
                 continuation?.resume(throwing: AppleSignInError.credentialInvalid)
                 continuation = nil
                 return
@@ -127,10 +127,12 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
 
 extension AppleSignInManager: ASAuthorizationControllerPresentationContextProviding {
     nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .compactMap { $0.keyWindow }
-            .first
-            ?? UIWindow()
+        MainActor.assumeIsolated {
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first
+                ?? UIWindow()
+        }
     }
 }
