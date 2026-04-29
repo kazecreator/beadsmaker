@@ -194,7 +194,7 @@
 "This will save your current work as a draft, then clear the canvas for a new draft." = "This will save your current work as a draft, then clear the canvas for a new draft.";
 "Zoom" = "Zoom";
 "Protect your drafts" = "Protect your drafts";
-"Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too." = "Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too.";
+"Local drafts stay on this device. Upgrade to Pro and enable iCloud Sync to keep your work safe across devices." = "Local drafts stay on this device. Upgrade to Pro and enable iCloud Sync to keep your work safe across devices.";
 "Dismiss data loss reminder" = "Dismiss data loss reminder";
 "Account linked" = "Account linked";
 "Drafts, saved patterns, and finished work appear here automatically." = "Drafts, saved patterns, and finished work appear here automatically.";

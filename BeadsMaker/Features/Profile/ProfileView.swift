@@ -145,40 +145,25 @@ struct ProfileView: View {
                     Text(L10n.tr("Protect your drafts"))
                         .font(.headline)
                         .foregroundStyle(BeadsMakerTheme.ink)
-                    Text(L10n.tr("Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too."))
+                    Text(L10n.tr("Local drafts stay on this device. Upgrade to Pro and enable iCloud Sync to keep your work safe across devices."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer(minLength: 8)
 
-                if sessionStore.currentUser.isPro {
-                    Button {
-                        profileStore.dismissDataLossRiskBanner()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .padding(8)
-                            .background(BeadsMakerTheme.canvas)
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(L10n.tr("Dismiss data loss reminder"))
-                } else {
-                    Button {
-                        isShowingProInfo = true
-                    } label: {
-                        Text(L10n.tr("Upgrade"))
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(BeadsMakerTheme.ink)
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
+                Button {
+                    profileStore.dismissDataLossRiskBanner()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(BeadsMakerTheme.canvas)
+                        .clipShape(Circle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.tr("Dismiss data loss reminder"))
             }
         }
         .pbCard()

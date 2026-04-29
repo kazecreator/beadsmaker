@@ -238,7 +238,7 @@
 "Pro" = "Pro";
 "Free" = "免费版";
 "Protect your drafts" = "保护你的草稿";
-"Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too." = "游客草稿保存在当前设备上。如果删除 App 或设备丢失，本地作品也可能一并丢失。";
+"Local drafts stay on this device. Upgrade to Pro and enable iCloud Sync to keep your work safe across devices." = "本地草稿保存在当前设备上。升级 Pro 并开启 iCloud 同步，即可跨设备安全保存作品。";
 "Dismiss data loss reminder" = "关闭数据丢失提醒";
 "Account linked" = "账号已关联";
 "Drafts, saved patterns, and finished work appear here automatically." = "草稿、收藏图纸和成品作品会自动显示在这里。";
