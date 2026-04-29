@@ -8,7 +8,7 @@ import CoreImage.CIFilterBuiltins
 struct PublishShareSheet: View {
     let pattern: Pattern
     let displayName: String
-    let avatarImage: UIImage?
+    let avatarPattern: Pattern?
     var onDone: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -21,7 +21,7 @@ struct PublishShareSheet: View {
                     ShareCardView(
                         pattern: pattern,
                         displayName: displayName,
-                        avatarImage: avatarImage
+                        avatarPattern: avatarPattern
                     )
                     .frame(width: cardWidth, height: cardHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -77,7 +77,7 @@ struct PublishShareSheet: View {
             content: ShareCardView(
                 pattern: pattern,
                 displayName: displayName,
-                avatarImage: avatarImage
+                avatarPattern: avatarPattern
             )
             .frame(width: cardWidth, height: cardHeight)
         )
@@ -91,7 +91,7 @@ struct PublishShareSheet: View {
 private struct ShareCardView: View {
     let pattern: Pattern
     let displayName: String
-    let avatarImage: UIImage?
+    let avatarPattern: Pattern?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -115,7 +115,7 @@ private struct ShareCardView: View {
                                 .font(.system(size: 14, weight: .bold, design: .rounded))
                                 .foregroundStyle(BeadsMakerTheme.ink)
                                 .lineLimit(1)
-                            Text("BeadsMaker")
+                            Text(L10n.tr("BeadsMaker"))
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(BeadsMakerTheme.ink.opacity(0.35))
                         }
@@ -124,7 +124,7 @@ private struct ShareCardView: View {
                     Spacer()
 
                     QROverlayView(dataString: PatternQRCode.encode(pattern) ?? "")
-                        .frame(width: 58, height: 58)
+                        .frame(width: 72, height: 72)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
@@ -135,8 +135,8 @@ private struct ShareCardView: View {
 
     @ViewBuilder
     private var avatarView: some View {
-        if let img = avatarImage {
-            Image(uiImage: img)
+        if let avatarPattern {
+            Image(uiImage: PatternImageRenderer.finishedImage(for: avatarPattern, cellSize: 16, scale: 2))
                 .resizable()
                 .interpolation(.none)
                 .scaledToFit()
@@ -182,11 +182,11 @@ private struct QROverlayView: View {
                 Image(uiImage: icon)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 15, height: 15)
-                    .clipShape(RoundedRectangle(cornerRadius: 3.5, style: .continuous))
+                    .frame(width: 18, height: 18)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     .padding(2)
                     .background(
-                        RoundedRectangle(cornerRadius: 4.5, style: .continuous)
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
                             .fill(Color.white)
                     )
             }
@@ -197,9 +197,9 @@ private struct QROverlayView: View {
         guard let data = string.data(using: .utf8) else { return nil }
         let filter = CIFilter.qrCodeGenerator()
         filter.message = data
-        filter.correctionLevel = "H"
+        filter.correctionLevel = "M"
         guard let output = filter.outputImage else { return nil }
-        let scaled = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 16, y: 16))
         let ctx = CIContext()
         guard let cg = ctx.createCGImage(scaled, from: scaled.extent) else { return nil }
         return UIImage(cgImage: cg)

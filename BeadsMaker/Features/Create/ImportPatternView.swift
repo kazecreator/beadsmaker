@@ -7,7 +7,7 @@ struct ImportPatternView: View {
     let onImport: (Pattern) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var detectedPayload: PatternQRPayload?
+    @State private var detectedPayload: DecodedQRPayload?
     @State private var parseError: String?
     @State private var cameraPermission: CameraPermission = .notDetermined
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -156,7 +156,7 @@ struct ImportPatternView: View {
 
     // MARK: - Preview
 
-    private func previewView(_ payload: PatternQRPayload) -> some View {
+    private func previewView(_ payload: DecodedQRPayload) -> some View {
         VStack(spacing: 0) {
             VStack(spacing: 16) {
                 Image(uiImage: PatternImageRenderer.finishedImage(
@@ -171,15 +171,15 @@ struct ImportPatternView: View {
                 .shadow(color: .black.opacity(0.1), radius: 16, y: 8)
 
                 VStack(spacing: 4) {
-                    Text(payload.t.isEmpty ? L10n.tr("Untitled") : payload.t)
+                    Text(payload.title.isEmpty ? L10n.tr("Untitled") : payload.title)
                         .font(.title3.bold())
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
 
                     HStack(spacing: 4) {
-                        Text("\(payload.w) × \(payload.h)")
+                        Text("\(payload.width) × \(payload.height)")
                         Text("·")
-                        Text("\(payload.p.count) \(L10n.tr("beads"))")
+                        Text("\(payload.beadCount) \(L10n.tr("beads"))")
                     }
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -210,6 +210,7 @@ struct ImportPatternView: View {
                     Button(L10n.tr("Import Anyway"), role: .destructive) {
                         importPattern(payload)
                     }
+                    .tint(BeadsMakerTheme.destructive)
                     Button(L10n.tr("Cancel"), role: .cancel) {}
                 }
 
@@ -231,7 +232,7 @@ struct ImportPatternView: View {
         .background(BeadsMakerTheme.surface)
     }
 
-    private func importPattern(_ payload: PatternQRPayload) {
+    private func importPattern(_ payload: DecodedQRPayload) {
         let pattern = PatternQRCode.toPattern(payload, authorName: L10n.tr("Imported"))
         onImport(pattern)
         dismiss()

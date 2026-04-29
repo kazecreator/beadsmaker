@@ -40,9 +40,12 @@ final class AppSessionStore: ObservableObject {
     }
 
     #if DEBUG
-    /// Resets user back to a fresh guest state. Debug testing only.
     func debugResetUser() {
         currentUser = userService.bootstrapGuestUser()
+    }
+
+    func debugSetPro(_ isPro: Bool) {
+        currentUser.isPro = isPro
     }
     #endif
 
@@ -84,6 +87,17 @@ final class CreateStore: ObservableObject {
 
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
+
+    var recentlyUsedColors: [String] {
+        let counts = currentPattern.pixels
+            .compactMap { $0.colorHex }
+            .reduce(into: [:]) { dict, hex in
+                dict[hex, default: 0] += 1
+            }
+        return counts
+            .sorted { $0.value > $1.value }
+            .map { $0.key }
+    }
 
     func tapCell(x: Int, y: Int) {
         beginStroke()
@@ -355,6 +369,12 @@ final class LibraryStore: ObservableObject {
     func deleteFinished(id: UUID, for user: User) {
         guard let local = patternService as? LocalPatternService else { return }
         local.deleteFinished(id: id)
+        load(for: user)
+    }
+
+    func renameFinished(id: UUID, title: String, for user: User) {
+        guard let local = patternService as? LocalPatternService else { return }
+        local.renameFinished(id: id, title: title)
         load(for: user)
     }
 }

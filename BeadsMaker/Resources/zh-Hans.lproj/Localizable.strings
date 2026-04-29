@@ -187,6 +187,7 @@
 "Selected Bead Color" = "当前拼豆颜色";
 "Show tools" = "展开工具";
 "This will remove every bead from the current draft." = "这会移除当前草稿中的所有拼豆。";
+"This will save your current work as a draft, then clear the canvas for a new draft." = "这会先将当前作品保存为草稿，然后清空画布开始新草稿。";
 "Zoom" = "缩放";
 "Edit" = "编辑";
 "Create Copy" = "创建副本";
@@ -222,7 +223,7 @@
 // Pro upsell
 "Pro Feature" = "Pro 功能";
 "Upgrade to Pro — ¥6" = "升级 Pro — ¥6";
-"Not now" = "暂时不用";
+"Not Now" = "暂时不用";
 "Publish your patterns" = "发布你的图纸";
 "Unlimited drafts" = "无限草稿";
 "iCloud sync across devices" = "iCloud 同步";
@@ -292,6 +293,7 @@
 "No QR code found in image." = "图片中未找到二维码。";
 "Scan Again" = "重新扫描";
 "beads" = "颗";
+"BeadsMaker" = "玩豆";
 "BeadsMaker Pro" = "玩豆 Pro";
 "Unlock the Full Studio" = "解锁完整工作室";
 "Become a Pro Creator" = "成为 Pro 创作者";
@@ -311,3 +313,4 @@
 "Change Size" = "更改尺寸";
 "Changing size will remove beads outside the new area." = "更改尺寸将删除新区域外的珠子。";
 "Pattern avatars are a Pro feature." = "作品头像为 Pro 功能。";
+"Recently Used" = "最近使用";

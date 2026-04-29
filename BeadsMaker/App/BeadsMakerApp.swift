@@ -24,9 +24,14 @@ struct BeadsMakerApp: App {
         let storage: PatternStorage
         let icloudPrefs: iCloudPreferencesStore?
 
-        if proStatus.isPro, syncMgr.isAvailable, let iCloudStorage = iCloudPatternStorage() {
+        let syncWasEnabled = UserDefaults.standard.bool(forKey: "sync.enabled")
+        let syncNeverSet = UserDefaults.standard.object(forKey: "sync.enabled") == nil
+        let shouldUseiCloud = proStatus.isPro && syncMgr.isAvailable && (syncWasEnabled || syncNeverSet)
+
+        if shouldUseiCloud, let iCloudStorage = iCloudPatternStorage() {
             storage = iCloudStorage
             icloudPrefs = iCloudPreferencesStore()
+            UserDefaults.standard.set(true, forKey: "sync.enabled")
             syncMgr.startSync()
         } else {
             storage = LocalPatternStorage()
@@ -51,11 +56,34 @@ struct BeadsMakerApp: App {
         ))
 
         #if DEBUG
-        debugPrint("BeadsMaker is running local-only.")
         if patternSvc.isUsingiCloud {
-            debugPrint("iCloud sync enabled for Pro user.")
+            print("[AppInit] iCloud storage selected — sync enabled")
+        } else {
+            let reason = proStatus.isPro
+                ? (syncMgr.isAvailable ? "iCloudPatternStorage init failed" : "iCloud not available")
+                : "user is not Pro"
+            print("[AppInit] local storage selected — \(reason)")
         }
         #endif
+
+        syncMgr.onToggleSync = { wantsOn in
+            if wantsOn {
+                guard let iCloudStorage = iCloudPatternStorage() else {
+                    syncMgr.syncStatus = .unavailable
+                    return
+                }
+                syncMgr.syncStatus = .syncing(downloaded: 0, total: 0)
+                if iCloudStorage.isEmpty {
+                    await patternSvc.migrateToiCloud(storage: iCloudStorage)
+                } else {
+                    await patternSvc.switchToiCloud(storage: iCloudStorage)
+                }
+                UserDefaults.standard.set(true, forKey: "sync.enabled")
+                syncMgr.startSync()
+            } else {
+                syncMgr.stopSync()
+            }
+        }
     }
 
     var body: some Scene {
@@ -94,7 +122,13 @@ struct BeadsMakerApp: App {
             return
         }
         syncManager.syncStatus = .syncing(downloaded: 0, total: 0)
-        await patternService.migrateToiCloud(storage: iCloudStorage)
+        let iCloudEmpty = iCloudStorage.isEmpty
+        if iCloudEmpty {
+            await patternService.migrateToiCloud(storage: iCloudStorage)
+        } else {
+            await patternService.switchToiCloud(storage: iCloudStorage)
+        }
+        UserDefaults.standard.set(true, forKey: "sync.enabled")
         syncManager.startSync()
     }
 }

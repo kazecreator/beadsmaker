@@ -14,50 +14,12 @@ struct LibraryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
-                        ForEach(LibrarySegment.allCases) { segment in
-                            Text(segment.title).tag(segment)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                    segmentPicker
 
                     if libraryStore.displayedPatterns.isEmpty {
                         emptyState
                     } else {
-                        ForEach(libraryStore.displayedPatterns) { pattern in
-                            if libraryStore.selectedSegment == .drafts {
-                                Button {
-                                    createStore.loadForEditing(pattern)
-                                    selectedTab = .create
-                                } label: {
-                                    patternCard(pattern)
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        draftToDelete = pattern
-                                    } label: {
-                                        Label(L10n.tr("Delete Draft"), systemImage: "trash")
-                                    }
-                                }
-                            } else {
-                                NavigationLink {
-                                    referenceView(for: pattern)
-                                } label: {
-                                    patternCard(pattern)
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    if libraryStore.selectedSegment == .finished {
-                                        Button(role: .destructive) {
-                                            draftToDelete = pattern
-                                        } label: {
-                                            Label(L10n.tr("Delete Finished Work"), systemImage: "trash")
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        patternList
                     }
                 }
                 .padding(16)
@@ -107,7 +69,7 @@ struct LibraryView: View {
                 PublishShareSheet(
                     pattern: pattern,
                     displayName: sessionStore.currentUser.displayName,
-                    avatarImage: resolvedAvatarImage(),
+                    avatarPattern: avatarPatternForShare(),
                     onDone: {
                         libraryStore.selectedSegment = .finished
                     }
@@ -117,15 +79,67 @@ struct LibraryView: View {
         .pbScreen()
     }
 
-    private func resolvedAvatarImage() -> UIImage? {
+    // MARK: - Subviews
+
+    private var segmentPicker: some View {
+        Picker(L10n.tr("Library"), selection: $libraryStore.selectedSegment) {
+            ForEach(LibrarySegment.allCases) { segment in
+                Text(segment.title).tag(segment)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private var patternList: some View {
+        ForEach(libraryStore.displayedPatterns) { pattern in
+            if libraryStore.selectedSegment == .drafts {
+                Button {
+                    createStore.loadForEditing(pattern)
+                    selectedTab = .create
+                } label: {
+                    patternCard(pattern)
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        draftToDelete = pattern
+                    } label: {
+                        Label(L10n.tr("Delete Draft"), systemImage: "trash")
+                            .foregroundStyle(BeadsMakerTheme.destructive)
+                    }
+                    .tint(BeadsMakerTheme.destructive)
+                }
+            } else {
+                NavigationLink {
+                    referenceView(for: pattern)
+                } label: {
+                    patternCard(pattern)
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    if libraryStore.selectedSegment == .finished {
+                        Button(role: .destructive) {
+                            draftToDelete = pattern
+                        } label: {
+                            Label(L10n.tr("Delete Finished Work"), systemImage: "trash")
+                                .foregroundStyle(BeadsMakerTheme.destructive)
+                        }
+                        .tint(BeadsMakerTheme.destructive)
+                    }
+                }
+            }
+        }
+    }
+
+    private func avatarPatternForShare() -> Pattern? {
         let avatar = sessionStore.currentUser.avatar
         if let presetID = avatar.presetId,
            let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
-            return PatternImageRenderer.finishedImage(for: preset.pattern, cellSize: 16, scale: 2)
+            return preset.pattern
         }
         if let patternID = avatar.patternId,
            let pattern = libraryStore.content.published.first(where: { $0.id == patternID }) {
-            return PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2)
+            return pattern
         }
         return nil
     }
@@ -164,7 +178,10 @@ struct LibraryView: View {
                         isShowingDraftLimitAlert = true
                     }
                 },
-                onShare: { sharePattern = pattern }
+                onShare: { sharePattern = pattern },
+                onRename: { newTitle in
+                    libraryStore.renameFinished(id: pattern.id, title: newTitle, for: sessionStore.currentUser)
+                }
             )
         case .saved:
             DraftReferenceView(

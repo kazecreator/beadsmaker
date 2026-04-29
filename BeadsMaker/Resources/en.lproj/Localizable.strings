@@ -187,6 +187,7 @@
 "Selected Bead Color" = "Selected Bead Color";
 "Show tools" = "Show tools";
 "This will remove every bead from the current draft." = "This will remove every bead from the current draft.";
+"This will save your current work as a draft, then clear the canvas for a new draft." = "This will save your current work as a draft, then clear the canvas for a new draft.";
 "Zoom" = "Zoom";
 "Protect your drafts" = "Protect your drafts";
 "Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too." = "Guest drafts stay on this device. If the app is deleted or the device is lost, your local work may be lost too.";
@@ -268,7 +269,7 @@
 "Holiday" = "Holiday";
 "Nature" = "Nature";
 "New Draft" = "New Draft";
-"Not now" = "Not now";
+"Not Now" = "Not Now";
 "Other" = "Other";
 "Pro" = "Pro";
 "Pro Feature" = "Pro Feature";
@@ -281,6 +282,7 @@
 "iCloud sync across devices" = "iCloud Sync";
 "Clear Canvas" = "Clear Canvas";
 "Clear Canvas?" = "Clear Canvas?";
+"BeadsMaker" = "BeadsMaker";
 "BeadsMaker Pro" = "BeadsMaker Pro";
 "Unlock the Full Studio" = "Unlock the Full Studio";
 "Become a Pro Creator" = "Become a Pro Creator";
@@ -300,3 +302,4 @@
 "Change Size" = "Change Size";
 "Changing size will remove beads outside the new area." = "Changing size will remove beads outside the new area.";
 "Pattern avatars are a Pro feature." = "Pattern avatars are a Pro feature.";
+"Recently Used" = "Recently Used";

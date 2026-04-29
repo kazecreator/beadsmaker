@@ -96,7 +96,7 @@ struct PreviewView: View {
                 PublishShareSheet(
                     pattern: pattern,
                     displayName: sessionStore.currentUser.displayName,
-                    avatarImage: resolvedAvatarImage()
+                    avatarPattern: avatarPatternForShare()
                 )
             }
         }
@@ -108,15 +108,15 @@ struct PreviewView: View {
         .pbScreen()
     }
 
-    private func resolvedAvatarImage() -> UIImage? {
+    private func avatarPatternForShare() -> Pattern? {
         let avatar = sessionStore.currentUser.avatar
         if let presetID = avatar.presetId,
            let preset = MockData.presetAvatars.first(where: { $0.id == presetID }) {
-            return PatternImageRenderer.finishedImage(for: preset.pattern, cellSize: 16, scale: 2)
+            return preset.pattern
         }
         if let patternID = avatar.patternId,
            let pattern = libraryStore.content.published.first(where: { $0.id == patternID }) {
-            return PatternImageRenderer.finishedImage(for: pattern, cellSize: 16, scale: 2)
+            return pattern
         }
         return nil
     }

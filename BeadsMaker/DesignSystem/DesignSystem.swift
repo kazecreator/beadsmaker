@@ -5,6 +5,7 @@ enum BeadsMakerTheme {
     static let canvas = Color.white
     static let surface = Color(hex: "#F5F5F5")
     static let coral = Color(hex: "#FF5A36")
+    static let destructive = Color.red
     static let muted = Color.black.opacity(0.08)
     static let outline = Color.black.opacity(0.12)
     static let shadow = Color.black.opacity(0.06)

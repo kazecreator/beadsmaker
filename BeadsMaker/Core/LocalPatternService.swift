@@ -51,6 +51,13 @@ final class LocalPatternService: PatternService {
         for pattern in published { storage.writePattern(pattern, to: publishedDir) }
     }
 
+    func switchToiCloud(storage iCloudStorage: PatternStorage) async {
+        self.storage = iCloudStorage
+        for dir in [draftsDir, savedDir, publishedDir] {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+    }
+
     /// Returns the current storage backend type.
     var isUsingiCloud: Bool { storage is iCloudPatternStorage }
 
@@ -166,6 +173,13 @@ final class LocalPatternService: PatternService {
 
     func deleteFinished(id: UUID) {
         storage.deletePattern(id: id, from: publishedDir)
+    }
+
+    func renameFinished(id: UUID, title: String) {
+        var patterns = storage.loadPatterns(from: publishedDir)
+        guard let idx = patterns.firstIndex(where: { $0.id == id }) else { return }
+        patterns[idx].title = title
+        storage.writePattern(patterns[idx], to: publishedDir)
     }
 
     // MARK: - Private helpers

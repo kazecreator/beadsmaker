@@ -14,6 +14,7 @@ struct CreateView: View {
     @State private var isShowingSizePicker = false
     @State private var isToolbarExpanded = true
     @State private var isTrackPointActive = false
+    @State private var isShowingNewDraftConfirmation = false
     @State private var isShowingResetConfirmation = false
     @State private var isShowingResizeConfirmation = false
     @State private var isShowingDraftLimitAlert = false
@@ -145,14 +146,10 @@ struct CreateView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        let succeeded = createStore.startNewDraft(
-                            user: sessionStore.currentUser,
-                            library: libraryStore.content
-                        )
-                        if succeeded {
-                            libraryStore.load(for: sessionStore.currentUser)
+                        if createStore.currentPattern.hasPlacedBeads {
+                            isShowingNewDraftConfirmation = true
                         } else {
-                            isShowingDraftLimitAlert = true
+                            startNewDraft()
                         }
                     } label: {
                         Label(L10n.tr("New Draft"), systemImage: "square.and.pencil")
@@ -190,9 +187,11 @@ struct CreateView: View {
             draftTitle = newValue
         }
         .sheet(isPresented: $isShowingColorPicker) {
-            ColorPickerSheet(selectedColorHex: $createStore.selectedColorHex) {
-                createStore.selectedTool = .brush
-            }
+            ColorPickerSheet(
+                selectedColorHex: $createStore.selectedColorHex,
+                recentlyUsedColors: createStore.recentlyUsedColors,
+                onSelect: { createStore.selectedTool = .brush }
+            )
         }
         .sheet(isPresented: $isShowingSizePicker) {
             SizePickerSheet(
@@ -207,6 +206,19 @@ struct CreateView: View {
                 createStore.remixImported(pattern)
                 libraryStore.load(for: sessionStore.currentUser)
             }
+        }
+        .confirmationDialog(
+            L10n.tr("Clear Canvas?"),
+            isPresented: $isShowingNewDraftConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.tr("New Draft"), role: .destructive) {
+                startNewDraft()
+                haptic.impactOccurred()
+            }
+            Button(L10n.tr("Cancel"), role: .cancel) { }
+        } message: {
+            Text(L10n.tr("This will save your current work as a draft, then clear the canvas for a new draft."))
         }
         .confirmationDialog(
             L10n.tr("Clear Canvas?"),
@@ -244,12 +256,21 @@ struct CreateView: View {
     private var editorCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                TextField(L10n.tr("Untitled Draft"), text: $draftTitle)
-                    .font(.body.weight(.semibold))
-                    .textFieldStyle(.plain)
-                    .onChange(of: draftTitle) { _, newValue in
-                        createStore.updateTitle(newValue)
-                    }
+                HStack(spacing: 8) {
+                    Image(systemName: "pencil")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(BeadsMakerTheme.ink.opacity(0.4))
+                    TextField(L10n.tr("Untitled Draft"), text: $draftTitle)
+                        .font(.body.weight(.semibold))
+                        .textFieldStyle(.plain)
+                        .onChange(of: draftTitle) { _, newValue in
+                            createStore.updateTitle(newValue)
+                        }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(BeadsMakerTheme.canvas)
+                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous))
 
                 Button {
                     withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
@@ -269,8 +290,6 @@ struct CreateView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            lockControlButton
-
                             toolSelectionButton(.brush)
 
                             ForEach(EditorTool.allCases.filter { $0 != .brush }) { tool in
@@ -306,7 +325,9 @@ struct CreateView: View {
                                 }
                             }
                         }
+                        .padding(1)
                     }
+                    .padding(-1)
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -376,16 +397,23 @@ struct CreateView: View {
                     .fill(Color(red: 0.96, green: 0.93, blue: 0.86))
             )
             .overlay(alignment: .topTrailing) {
-                if createStore.isCanvasLocked {
-                    Label(L10n.tr("Locked"), systemImage: "lock.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(BeadsMakerTheme.ink.opacity(0.86))
-                        .clipShape(Capsule())
-                        .padding(12)
+                Button {
+                    createStore.toggleCanvasLock()
+                    haptic.impactOccurred()
+                } label: {
+                    Label(
+                        createStore.isCanvasLocked ? L10n.tr("Locked") : L10n.tr("Lock"),
+                        systemImage: createStore.isCanvasLocked ? "lock.fill" : "lock.open"
+                    )
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(createStore.isCanvasLocked ? Color.white : BeadsMakerTheme.ink.opacity(0.45))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(createStore.isCanvasLocked ? BeadsMakerTheme.ink.opacity(0.86) : Color.white.opacity(0.45))
+                    .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
+                .padding(12)
             }
             .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
             .overlay(
@@ -551,6 +579,18 @@ struct CreateView: View {
         MockData.beadColor(for: createStore.selectedColorHex)
     }
 
+    private func startNewDraft() {
+        let succeeded = createStore.startNewDraft(
+            user: sessionStore.currentUser,
+            library: libraryStore.content
+        )
+        if succeeded {
+            libraryStore.load(for: sessionStore.currentUser)
+        } else {
+            isShowingDraftLimitAlert = true
+        }
+    }
+
     private struct BeadSwatch: View {
         let color: Color
         let isSelected: Bool
@@ -639,11 +679,19 @@ struct CreateView: View {
         }
     }
 
+    private struct ScrollOffsetKey: PreferenceKey {
+        static let defaultValue: CGFloat = 0
+        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    }
+
     private struct ColorPickerSheet: View {
         @Binding var selectedColorHex: String
+        let recentlyUsedColors: [String]
         let onSelect: () -> Void
 
         @Environment(\.dismiss) private var dismiss
+        @State private var indexStripOpacity: Double = 1
+        @State private var hideTaskID = UUID()
 
         private let columns = [
             GridItem(.adaptive(minimum: 76), spacing: 12)
@@ -651,61 +699,146 @@ struct CreateView: View {
 
         var body: some View {
             NavigationStack {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 22, pinnedViews: [.sectionHeaders]) {
-                        ForEach(MockData.mardColorFamilies, id: \.self) { family in
-                            let colors = MockData.mardStandardPalette.filter { $0.family == family }
-                            Section {
-                                LazyVGrid(columns: columns, spacing: 12) {
-                                    ForEach(colors) { beadColor in
-                                        Button {
-                                            selectedColorHex = beadColor.hex
-                                            onSelect()
-                                            dismiss()
-                                        } label: {
-                                            VStack(spacing: 8) {
-                                                BeadSwatch(color: Color(hex: beadColor.hex), isSelected: selectedColorHex == beadColor.hex)
-                                                VStack(spacing: 2) {
-                                                    Text(beadColor.code)
-                                                        .font(.caption.weight(.black))
-                                                        .foregroundStyle(BeadsMakerTheme.ink)
-                                                    Text(beadColor.hex)
-                                                        .font(.caption2.monospacedDigit())
-                                                        .foregroundStyle(.secondary)
+                ZStack(alignment: .trailing) {
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 22) {
+                                GeometryReader { geo in
+                                    Color.clear
+                                        .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
+                                }
+                                .frame(height: 0)
+                                if !recentlyUsedColors.isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(L10n.tr("Recently Used"))
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.leading, 16)
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 10) {
+                                                ForEach(recentlyUsedColors, id: \.self) { hex in
+                                                    Button {
+                                                        selectedColorHex = hex
+                                                        onSelect()
+                                                        dismiss()
+                                                    } label: {
+                                                        VStack(spacing: 6) {
+                                                            BeadSwatch(
+                                                                color: Color(hex: hex),
+                                                                isSelected: selectedColorHex == hex
+                                                            )
+                                                            Text(MockData.beadColor(for: hex)?.code ?? hex)
+                                                                .font(.caption2.weight(.semibold))
+                                                                .foregroundStyle(BeadsMakerTheme.ink)
+                                                        }
+                                                    }
+                                                    .buttonStyle(.plain)
                                                 }
                                             }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 10)
-                                            .background(Color.white)
-                                            .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous)
-                                                    .stroke(selectedColorHex == beadColor.hex ? BeadsMakerTheme.ink : BeadsMakerTheme.outline, lineWidth: selectedColorHex == beadColor.hex ? 2 : 1)
-                                            )
+                                            .padding(.horizontal, 16)
                                         }
-                                        .accessibilityLabel(L10n.tr("MARD color %@ %@", beadColor.code, beadColor.hex))
-                                        .buttonStyle(.plain)
+                                    }
+                                    .padding(.top, 8)
+                                }
+                                LazyVStack(alignment: .leading, spacing: 22, pinnedViews: [.sectionHeaders]) {
+                                    ForEach(MockData.mardColorFamilies, id: \.self) { family in
+                                        let colors = MockData.mardStandardPalette.filter { $0.family == family }
+                                        Section {
+                                            LazyVGrid(columns: columns, spacing: 12) {
+                                                ForEach(colors) { beadColor in
+                                                    Button {
+                                                        selectedColorHex = beadColor.hex
+                                                        onSelect()
+                                                        dismiss()
+                                                    } label: {
+                                                        VStack(spacing: 8) {
+                                                            BeadSwatch(color: Color(hex: beadColor.hex), isSelected: selectedColorHex == beadColor.hex)
+                                                            VStack(spacing: 2) {
+                                                                Text(beadColor.code)
+                                                                    .font(.caption.weight(.black))
+                                                                    .foregroundStyle(BeadsMakerTheme.ink)
+                                                                Text(beadColor.hex)
+                                                                    .font(.caption2.monospacedDigit())
+                                                                    .foregroundStyle(.secondary)
+                                                            }
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding(.vertical, 10)
+                                                        .background(Color.white)
+                                                        .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous))
+                                                        .overlay(
+                                                            RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.button, style: .continuous)
+                                                                .stroke(selectedColorHex == beadColor.hex ? BeadsMakerTheme.ink : BeadsMakerTheme.outline, lineWidth: selectedColorHex == beadColor.hex ? 2 : 1)
+                                                        )
+                                                    }
+                                                    .accessibilityLabel(L10n.tr("MARD color %@ %@", beadColor.code, beadColor.hex))
+                                                    .buttonStyle(.plain)
+                                                }
+                                            }
+                                        } header: {
+                                            HStack {
+                                                Text(L10n.tr("Color Family %@", family))
+                                                    .font(.headline)
+                                                Spacer()
+                                                Text(L10n.tr("%d colors", colors.count))
+                                                    .font(.caption.weight(.semibold))
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 10)
+                                            .frame(maxWidth: .infinity)
+                                            .background(BeadsMakerTheme.surface)
+                                            .zIndex(1)
+                                        }
+                                        .id(family)
                                     }
                                 }
-                            } header: {
-                                HStack {
-                                    Text(L10n.tr("Color Family %@", family))
-                                        .font(.headline)
-                                    Spacer()
-                                    Text(L10n.tr("%d colors", colors.count))
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.secondary)
+                                .padding(.bottom, 16)
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                        .coordinateSpace(name: "scroll")
+                        .onPreferenceChange(ScrollOffsetKey.self) { _ in
+                            indexStripOpacity = 1
+                            hideTaskID = UUID()
+                        }
+                        .scrollIndicators(.hidden)
+                        .overlay(alignment: .trailing) {
+                            VStack(spacing: 0) {
+                                ForEach(MockData.mardColorFamilies, id: \.self) { family in
+                                    Button {
+                                        indexStripOpacity = 1
+                                        hideTaskID = UUID()
+                                        withAnimation { scrollProxy.scrollTo(family, anchor: .top) }
+                                    } label: {
+                                        Text(family)
+                                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                                            .foregroundStyle(BeadsMakerTheme.ink.opacity(indexStripOpacity))
+                                            .frame(height: max(18, (UIScreen.main.bounds.height * 0.55) / CGFloat(MockData.mardColorFamilies.count)))
+                                            .padding(.horizontal, 4)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Jump to Color Family \(family)")
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .frame(maxWidth: .infinity)
-                                .background(BeadsMakerTheme.surface)
-                                .zIndex(1)
+                            }
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 6)
+                            .contentShape(Rectangle())
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.white.opacity(0.88 * indexStripOpacity))
+                                    .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 1)
+                            )
+                            .padding(.trailing, 4)
+                        }
+                        .task(id: hideTaskID) {
+                            try? await Task.sleep(for: .seconds(2.5))
+                            guard !Task.isCancelled else { return }
+                            withAnimation(.easeOut(duration: 0.35)) {
+                                indexStripOpacity = 0.25
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
                 }
                 .navigationTitle(L10n.tr("MARD Color Chart"))
                 .navigationBarTitleDisplayMode(.inline)

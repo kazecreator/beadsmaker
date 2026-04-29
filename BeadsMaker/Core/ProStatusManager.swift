@@ -168,12 +168,18 @@ final class ProStatusManager: ObservableObject {
     }
 
     #if DEBUG
-    /// Clears Pro status from Keychain and memory. Debug testing only.
     func debugResetPro() {
         isPro = false
         product = nil
         ProKeychain.write(false)
         Task { await loadProductAndVerify() }
+    }
+
+    func debugTogglePro() -> Bool {
+        let newValue = !isPro
+        isPro = newValue
+        ProKeychain.write(newValue)
+        return newValue
     }
     #endif
 

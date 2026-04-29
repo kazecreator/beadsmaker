@@ -259,9 +259,51 @@ struct ProfileView: View {
             } label: {
                 legalRow(title: L10n.tr("Rate Us"), systemImage: "star")
             }
+
+            #if DEBUG
+            Divider()
+                .padding(.leading, 48)
+
+            debugProToggleRow
+            #endif
         }
         .pbCard()
     }
+
+    #if DEBUG
+    private var debugProToggleRow: some View {
+        Button {
+            let newValue = proStatusManager.debugTogglePro()
+            sessionStore.debugSetPro(newValue)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "hammer")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .frame(width: 36, height: 36)
+                    .background(BeadsMakerTheme.canvas)
+                    .clipShape(Circle())
+
+                Text("Debug: Toggle Pro")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(BeadsMakerTheme.ink)
+
+                Spacer()
+
+                Text(sessionStore.currentUser.isPro ? "PRO" : "FREE")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(sessionStore.currentUser.isPro ? Color.green : Color.orange)
+                    .clipShape(Capsule())
+            }
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
 
     private func legalRow(title: String, systemImage: String) -> some View {
         HStack(spacing: 12) {
@@ -312,18 +354,17 @@ struct ProfileView: View {
 
     private var syncBinding: Binding<Bool> {
         Binding(
-            get: {
-                if case .syncing = syncManager.syncStatus { return true }
-                if case .upToDate = syncManager.syncStatus { return true }
-                return false
-            },
+            get: { syncManager.isSyncEnabled && sessionStore.currentUser.isPro },
             set: { wantsOn in
                 if wantsOn {
                     guard sessionStore.currentUser.isPro else {
                         isShowingProInfo = true
                         return
                     }
-                    syncManager.startSync()
+                    syncManager.isSyncEnabled = true
+                    Task {
+                        await syncManager.onToggleSync?(true)
+                    }
                 } else {
                     syncManager.stopSync()
                 }

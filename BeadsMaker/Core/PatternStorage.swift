@@ -9,6 +9,16 @@ protocol PatternStorage {
     func deletePattern(id: UUID, from directory: URL)
     func fileExists(id: UUID, in directory: URL) -> Bool
     func patternCount(in directory: URL) -> Int
+    var isEmpty: Bool { get }
+}
+
+extension PatternStorage {
+    var isEmpty: Bool {
+        let dirs = ["drafts", "saved", "published"].map {
+            baseURL().appendingPathComponent($0, isDirectory: true)
+        }
+        return dirs.allSatisfy { patternCount(in: $0) == 0 }
+    }
 }
 
 // MARK: - File URL helper (shared)

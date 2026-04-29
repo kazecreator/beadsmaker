@@ -9,10 +9,13 @@ struct DraftReferenceView: View {
     var actionTitle: String? = nil
     var onAction: (() -> Void)? = nil
     var onShare: (() -> Void)? = nil
+    var onRename: ((String) -> Void)? = nil
 
     @State private var canvasScale: Double = 1.0
     @State private var canvasOffset: CGSize = .zero
     @State private var viewportSize: CGSize = .zero
+    @State private var isRenaming = false
+    @State private var renameTitle = ""
     @State private var hasInitialized = false
     @State private var isLegendExpanded = true
     @State private var isTrackPointActive = false
@@ -101,16 +104,6 @@ struct DraftReferenceView: View {
                     offset: canvasOffset
                 )
                 .background(Color(red: 0.96, green: 0.93, blue: 0.86))
-                .gesture(
-                    DragGesture(minimumDistance: 4)
-                        .onChanged { value in
-                            canvasOffset = clampedOffset(
-                                CGSize(width: canvasOffset.width + value.translation.width,
-                                       height: canvasOffset.height + value.translation.height),
-                                viewport: geo.size
-                            )
-                        }
-                )
                 .onAppear {
                     guard !hasInitialized else { return }
                     viewportSize = geo.size
@@ -136,6 +129,17 @@ struct DraftReferenceView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 12) {
+                    if let onRename {
+                        Button {
+                            renameTitle = pattern.title
+                            isRenaming = true
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(BeadsMakerTheme.ink)
+                        }
+                    }
+
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             canvasScale = 1.0
@@ -168,6 +172,16 @@ struct DraftReferenceView: View {
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .background(Color(red: 0.96, green: 0.93, blue: 0.86).ignoresSafeArea())
         .pbScreen()
+        .alert(L10n.tr("Edit Name"), isPresented: $isRenaming) {
+            TextField(L10n.tr("Pattern Title"), text: $renameTitle)
+            Button(L10n.tr("Done")) {
+                onRename?(renameTitle)
+                isRenaming = false
+            }
+            Button(L10n.tr("Cancel"), role: .cancel) {
+                isRenaming = false
+            }
+        }
     }
 
     // MARK: - Canvas controls
@@ -392,8 +406,8 @@ private struct ReferenceCanvas: View {
         context.fill(Path(ellipseIn: hl), with: .color(Color.white.opacity(0.38)))
 
         if let hex, let entry = codeTable[hex] {
-            let fontSize = min(max(cw * 0.34, 7.0), 11.0)
-            let outlinePad = max(cw * 0.06, 1.0)
+            let fontSize = min(max(cw * 0.34, 7.0), 18.0)
+            let outlinePad = min(max(cw * 0.06, 1.0), 2.5)
             let fillOpacity = entry.exact ? 1.0 : 0.80
             let shadowOpacity = entry.exact ? 0.65 : 0.45
             let center = CGPoint(x: rect.midX, y: rect.midY + ch * 0.04)

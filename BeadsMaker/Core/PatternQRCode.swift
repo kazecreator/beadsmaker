@@ -1,19 +1,26 @@
 import Foundation
 import Compression
 
-// MARK: - Payload
+// MARK: - Payloads
 
-struct PatternQRPayload: Codable {
-    /// Format version
+struct PatternQRPayloadV1: Codable {
     let v: Int
-    /// Grid width
     let w: Int
-    /// Grid height
     let h: Int
-    /// Title
     let t: String
-    /// Non-empty pixels with color hex values
     let p: [PixelEntry]
+}
+
+struct PatternQRPayloadV2: Codable {
+    let v: Int
+    let w: Int
+    let h: Int
+    let t: String
+    /// Unique color hex strings (no # prefix)
+    let pal: [String]
+    /// URL-safe base64 of zlib-compressed grid bytes.
+    /// Each byte is a palette index (0-based), or 254 for empty.
+    let g: String
 }
 
 struct PixelEntry: Codable {
@@ -22,11 +29,31 @@ struct PixelEntry: Codable {
     let c: String
 }
 
+/// Union type for decoded payloads — callers should inspect `version` to decide how to handle.
+struct DecodedQRPayload {
+    let version: Int
+    let width: Int
+    let height: Int
+    let title: String
+    /// Non-empty for v1 payloads.
+    let pixelEntries: [PixelEntry]
+    /// Non-empty for v2 payloads.
+    let palette: [String]
+    /// Non-empty for v2 payloads. Row-major grid, each byte = palette index or 254 (empty).
+    let gridBytes: Data
+
+    var beadCount: Int {
+        if version == 2 {
+            return gridBytes.filter { $0 != 254 }.count
+        }
+        return pixelEntries.count
+    }
+}
+
 // MARK: - PatternQRCode
 
 enum PatternQRCode {
     static let prefix = "pb:"
-    private static let currentVersion = 1
 
     /// Checks whether a scanned string looks like a valid pattern QR payload.
     static func canImport(_ string: String) -> Bool {
@@ -35,69 +62,133 @@ enum PatternQRCode {
 
     // MARK: - Encode
 
-    /// Encodes a Pattern into a compact QR-code-friendly string.
+    /// Encodes a Pattern into a compact QR-code-friendly string using the v2 palette+grid format.
     static func encode(_ pattern: Pattern) -> String? {
-        let payload = PatternQRPayload(
-            v: currentVersion,
+        // Build palette from unique colors (stable order by first occurrence).
+        var palette: [String] = []
+        var colorIndex: [String: Int] = [:]
+        for pixel in pattern.pixels {
+            guard let hex = pixel.colorHex, colorIndex[hex] == nil else { continue }
+            colorIndex[hex] = palette.count
+            palette.append(hex)
+        }
+
+        // Build grid bytes in row-major order.
+        var grid = Data(capacity: pattern.width * pattern.height)
+        let pixelColor = Dictionary(
+            uniqueKeysWithValues: pattern.pixels
+                .filter { $0.colorHex != nil }
+                .map { ("\($0.x),\($0.y)", $0.colorHex!) }
+        )
+        for y in 0..<pattern.height {
+            for x in 0..<pattern.width {
+                if let hex = pixelColor["\(x),\(y)"], let idx = colorIndex[hex] {
+                    grid.append(UInt8(idx))
+                } else {
+                    grid.append(254) // empty sentinel
+                }
+            }
+        }
+
+        // Compress grid bytes, then base64-url encode.
+        guard let compressedGrid = compress(grid) else { return nil }
+        let gridB64 = base64URLEncode(compressedGrid)
+
+        let payload = PatternQRPayloadV2(
+            v: 2,
             w: pattern.width,
             h: pattern.height,
             t: pattern.title,
-            p: pattern.pixels
-                .filter { $0.colorHex != nil }
-                .map { PixelEntry(x: $0.x, y: $0.y, c: $0.colorHex!) }
+            pal: palette,
+            g: gridB64
         )
 
         guard let jsonData = try? JSONEncoder().encode(payload),
               let compressed = compress(jsonData)
         else { return nil }
 
-        let b64 = compressed.base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
-        return prefix + b64
+        return prefix + base64URLEncode(compressed)
     }
 
     // MARK: - Decode
 
-    /// Decodes a QR code string back into pattern metadata.
-    static func decode(_ string: String) -> PatternQRPayload? {
+    /// Decodes a QR code string into a payload union that supports both v1 and v2 formats.
+    static func decode(_ string: String) -> DecodedQRPayload? {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.hasPrefix(prefix) else { return nil }
         let b64 = String(trimmed.dropFirst(prefix.count))
-            .replacingOccurrences(of: "-", with: "+")
-            .replacingOccurrences(of: "_", with: "/")
 
-        // Restore padding
-        let pad = b64.count % 4
-        let padded = pad == 0 ? b64 : b64 + String(repeating: "=", count: 4 - pad)
-
-        guard let compressed = Data(base64Encoded: padded),
-              let jsonData = decompress(compressed),
-              let payload = try? JSONDecoder().decode(PatternQRPayload.self, from: jsonData)
+        guard let compressed = base64URLDecode(b64),
+              let jsonData = decompress(compressed)
         else { return nil }
-        return payload
+
+        // Try v2 first (palette+grid), fall back to v1 (per-pixel entries).
+        if let p = try? JSONDecoder().decode(PatternQRPayloadV2.self, from: jsonData), p.v == 2 {
+            guard let grid = base64URLDecode(p.g),
+                  let decompressedGrid = decompress(grid)
+            else { return nil }
+            return DecodedQRPayload(
+                version: 2,
+                width: p.w,
+                height: p.h,
+                title: p.t,
+                pixelEntries: [],
+                palette: p.pal,
+                gridBytes: decompressedGrid
+            )
+        }
+
+        if let p = try? JSONDecoder().decode(PatternQRPayloadV1.self, from: jsonData), p.v == 1 {
+            return DecodedQRPayload(
+                version: 1,
+                width: p.w,
+                height: p.h,
+                title: p.t,
+                pixelEntries: p.p,
+                palette: [],
+                gridBytes: Data()
+            )
+        }
+
+        return nil
     }
 
     // MARK: - To Pattern
 
-    static func toPattern(_ payload: PatternQRPayload, authorName: String) -> Pattern {
-        let pixelMap = Dictionary(
-            uniqueKeysWithValues: payload.p.map { ("\($0.x),\($0.y)", $0.c) }
-        )
-        let pixels = (0..<payload.h).flatMap { y in
-            (0..<payload.w).map { x in
-                PatternPixel(x: x, y: y, colorHex: pixelMap["\(x),\(y)"])
+    static func toPattern(_ payload: DecodedQRPayload, authorName: String) -> Pattern {
+        let pixels: [PatternPixel]
+        var usedColors: [String] = []
+
+        if payload.version == 2 {
+            pixels = (0..<payload.height).flatMap { y in
+                (0..<payload.width).map { x in
+                    let idx = payload.gridBytes.count > y * payload.width + x
+                        ? Int(payload.gridBytes[y * payload.width + x]) : 254
+                    let hex = (idx < payload.palette.count) ? payload.palette[idx] : nil
+                    return PatternPixel(x: x, y: y, colorHex: hex)
+                }
             }
+            usedColors = payload.palette
+        } else {
+            let pixelMap = Dictionary(
+                uniqueKeysWithValues: payload.pixelEntries.map { ("\($0.x),\($0.y)", $0.c) }
+            )
+            pixels = (0..<payload.height).flatMap { y in
+                (0..<payload.width).map { x in
+                    PatternPixel(x: x, y: y, colorHex: pixelMap["\(x),\(y)"])
+                }
+            }
+            usedColors = payload.pixelEntries.map(\.c)
         }
+
         return Pattern(
             id: UUID(),
-            title: payload.t,
+            title: payload.title,
             authorName: authorName,
-            width: payload.w,
-            height: payload.h,
+            width: payload.width,
+            height: payload.height,
             pixels: pixels,
-            palette: payload.p.map(\.c),
+            palette: usedColors,
             status: .draft,
             visibility: .private,
             difficulty: .easy,
@@ -112,7 +203,7 @@ enum PatternQRCode {
     // MARK: - Compression
 
     private static func compress(_ data: Data) -> Data? {
-        let dstSize = data.count + 64
+        let dstSize = max(data.count + 64, data.count * 2)
         var result = Data(count: dstSize)
         let written = result.withUnsafeMutableBytes { dst in
             data.withUnsafeBytes { src in
@@ -142,5 +233,23 @@ enum PatternQRCode {
         }
         guard written > 0 else { return nil }
         return result.prefix(written)
+    }
+
+    // MARK: - Base64URL helpers
+
+    private static func base64URLEncode(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    private static func base64URLDecode(_ string: String) -> Data? {
+        let s = string
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let pad = s.count % 4
+        let padded = pad == 0 ? s : s + String(repeating: "=", count: 4 - pad)
+        return Data(base64Encoded: padded)
     }
 }

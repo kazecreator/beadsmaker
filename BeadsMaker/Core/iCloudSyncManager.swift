@@ -2,36 +2,73 @@ import Foundation
 
 @MainActor
 final class iCloudSyncManager: ObservableObject {
-    @Published var syncStatus: SyncStatus = .notPro
+    @Published var syncStatus: SyncStatus = .notPro {
+        didSet {
+            #if DEBUG
+            print("[iCloudSync] status → \(syncStatus)")
+            #endif
+        }
+    }
 
     private let containerID = "iCloud.com.kevinzhang.beadsmaker"
     private var metadataQuery: NSMetadataQuery?
 
     var isAvailable: Bool {
-        FileManager.default.ubiquityIdentityToken != nil
+        let available = FileManager.default.ubiquityIdentityToken != nil
+        #if DEBUG
+        if !available {
+            print("[iCloudSync] iCloud not available — no ubiquity identity token")
+        }
+        #endif
+        return available
     }
 
     var containerURL: URL? {
         FileManager.default.url(forUbiquityContainerIdentifier: containerID)
     }
 
+    // MARK: - Sync preference (persisted)
+
+    var isSyncEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "sync.enabled") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "sync.enabled")
+            #if DEBUG
+            print("[iCloudSync] isSyncEnabled = \(newValue)")
+            #endif
+        }
+    }
+
+    var onToggleSync: ((Bool) async -> Void)?
+
     // MARK: - Init
 
     init() {
+        #if DEBUG
+        print("[iCloudSync] init — isAvailable: \(FileManager.default.ubiquityIdentityToken != nil)")
+        #endif
         observeIdentityChanges()
     }
 
     // MARK: - Start / Stop
 
     func startSync() {
+        isSyncEnabled = true
         guard isAvailable else {
             syncStatus = .unavailable
             return
         }
+        #if DEBUG
+        print("[iCloudSync] startSync — starting metadata query")
+        #endif
         startMetadataQuery()
     }
 
     func stopSync() {
+        #if DEBUG
+        print("[iCloudSync] stopSync — stopping metadata query")
+        #endif
+        isSyncEnabled = false
         metadataQuery?.stop()
         metadataQuery = nil
         syncStatus = .notPro
@@ -49,6 +86,9 @@ final class iCloudSyncManager: ObservableObject {
     }
 
     @objc private func identityDidChange() {
+        #if DEBUG
+        print("[iCloudSync] identityDidChange — isAvailable: \(FileManager.default.ubiquityIdentityToken != nil)")
+        #endif
         if isAvailable {
             startMetadataQuery()
         } else {
@@ -102,6 +142,10 @@ final class iCloudSyncManager: ObservableObject {
                 downloaded += 1
             }
         }
+
+        #if DEBUG
+        print("[iCloudSync] metadata progress — \(downloaded)/\(total) files current")
+        #endif
 
         if total > 0 {
             syncStatus = .syncing(downloaded: downloaded, total: total)
