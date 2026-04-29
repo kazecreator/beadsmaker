@@ -183,6 +183,10 @@
 "Reset Canvas" = "Reset Canvas";
 "Reset Canvas?" = "Reset Canvas?";
 "Restore Purchase" = "Restore Purchase";
+"Retry" = "Retry";
+"Unable to load product" = "Unable to load product";
+"Check your internet connection and try again." = "Check your internet connection and try again.";
+"Loading product information..." = "Loading product information…";
 "Redo?" = "Redo?";
 "Selected Bead Color" = "Selected Bead Color";
 "Show tools" = "Show tools";

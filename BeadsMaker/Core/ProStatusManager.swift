@@ -70,6 +70,9 @@ final class ProStatusManager: ObservableObject {
     /// Non-nil when the last purchase or restore attempt produced a user-visible error.
     @Published var errorMessage: String?
 
+    /// True when StoreKit product loading failed (network issue, misconfiguration, etc.).
+    @Published private(set) var productLoadFailed = false
+
     init() {
         self.isPro = ProKeychain.read()
         Task { await loadProductAndVerify() }
@@ -155,14 +158,20 @@ final class ProStatusManager: ObservableObject {
 
     // MARK: - Helpers
 
+    func retryLoadProduct() async {
+        productLoadFailed = false
+        await loadProductAndVerify()
+    }
+
     private func loadProductAndVerify() async {
         do {
             let products = try await Product.products(for: [Self.productID])
             self.product = products.first
+            productLoadFailed = false
             print("[ProStatusManager] Loaded \(products.count) product(s). product=\(String(describing: products.first?.id))")
         } catch {
             print("[ProStatusManager] Product load FAILED: \(error)")
-            // Product load failure is non-fatal; purchase button is disabled.
+            productLoadFailed = true
         }
         await checkEntitlements()
     }

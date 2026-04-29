@@ -85,6 +85,7 @@ struct ProInfoView: View {
 
     // MARK: - Subscribe
 
+    @ViewBuilder
     private var subscribeSection: some View {
         VStack(spacing: 16) {
             if let product = proStatusManager.product {
@@ -109,37 +110,59 @@ struct ProInfoView: View {
                     RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
                         .stroke(BeadsMakerTheme.outline, lineWidth: 1)
                 )
-            }
 
-            Button {
-                Task { await handlePurchase() }
-            } label: {
-                if proStatusManager.purchaseInProgress {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .tint(.white)
-                } else {
-                    Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(proStatusManager.purchaseInProgress)
-
-            Button {
-                Task { await proStatusManager.restorePurchases() }
-            } label: {
-                if proStatusManager.restoreInProgress {
-                    ProgressView()
-                } else {
-                    Text(L10n.tr("Restore Purchase"))
+                purchaseButton
+                restoreButton
+            } else if proStatusManager.productLoadFailed {
+                VStack(spacing: 12) {
+                    Image(systemName: "wifi.slash")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text(L10n.tr("Unable to load product"))
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(BeadsMakerTheme.ink)
+                    Text(L10n.tr("Check your internet connection and try again."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        Task { await proStatusManager.retryLoadProduct() }
+                    } label: {
+                        Label(L10n.tr("Retry"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(BeadsMakerTheme.ink)
+                    .padding(.top, 4)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(16)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
+                        .stroke(BeadsMakerTheme.outline, lineWidth: 1)
+                )
+
+                restoreButton
+            } else {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .tint(BeadsMakerTheme.ink)
+                    Text(L10n.tr("Loading product information..."))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
+                        .stroke(BeadsMakerTheme.outline, lineWidth: 1)
+                )
             }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity)
-            .disabled(proStatusManager.restoreInProgress)
 
             if let message = proStatusManager.errorMessage {
                 Text(message)
@@ -147,6 +170,46 @@ struct ProInfoView: View {
                     .foregroundStyle(BeadsMakerTheme.ink)
             }
         }
+    }
+
+    private var purchaseButton: some View {
+        Button {
+            Task { await handlePurchase() }
+        } label: {
+            if proStatusManager.purchaseInProgress {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .tint(.white)
+            } else {
+                Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .disabled({
+            #if DEBUG
+            return proStatusManager.purchaseInProgress
+            #else
+            return proStatusManager.purchaseInProgress
+            #endif
+        }())
+    }
+
+    private var restoreButton: some View {
+        Button {
+            Task { await proStatusManager.restorePurchases() }
+        } label: {
+            if proStatusManager.restoreInProgress {
+                ProgressView()
+            } else {
+                Text(L10n.tr("Restore Purchase"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(BeadsMakerTheme.ink)
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .disabled(proStatusManager.restoreInProgress)
     }
 
     // MARK: - Actions

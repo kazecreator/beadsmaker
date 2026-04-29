@@ -118,24 +118,50 @@ struct PaywallView: View {
 
     private var ctaCard: some View {
         VStack(spacing: 12) {
-            Button {
-                Task { await handlePurchase() }
-            } label: {
-                if proStatusManager.purchaseInProgress {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+            if proStatusManager.productLoadFailed {
+                VStack(spacing: 12) {
+                    Image(systemName: "wifi.slash")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text(L10n.tr("Unable to load product"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(BeadsMakerTheme.ink)
+                    Text(L10n.tr("Check your internet connection and try again."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        Task { await proStatusManager.retryLoadProduct() }
+                    } label: {
+                        Label(L10n.tr("Retry"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(BeadsMakerTheme.ink)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(16)
+            } else {
+                Button {
+                    Task { await handlePurchase() }
+                } label: {
+                    if proStatusManager.purchaseInProgress {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled({
+                    #if DEBUG
+                    return proStatusManager.purchaseInProgress
+                    #else
+                    return proStatusManager.purchaseInProgress || proStatusManager.product == nil
+                    #endif
+                }())
             }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled({
-                #if DEBUG
-                return proStatusManager.purchaseInProgress
-                #else
-                return proStatusManager.purchaseInProgress || proStatusManager.product == nil
-                #endif
-            }())
 
             Button {
                 Task { await handleRestore() }

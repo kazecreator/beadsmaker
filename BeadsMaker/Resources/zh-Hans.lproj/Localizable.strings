@@ -183,6 +183,10 @@
 "Reset Canvas" = "重置画布";
 "Reset Canvas?" = "要重置画布吗？";
 "Restore Purchase" = "恢复购买";
+"Retry" = "重试";
+"Unable to load product" = "无法加载产品信息";
+"Check your internet connection and try again." = "请检查网络连接后重试。";
+"Loading product information..." = "正在加载产品信息…";
 "Redo?" = "要重做吗？";
 "Selected Bead Color" = "当前拼豆颜色";
 "Show tools" = "展开工具";

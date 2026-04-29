@@ -14,8 +14,6 @@ struct PrivacyPolicyView: View {
         NavigationStack {
             WebView(url: privacyURL)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationTitle(L10n.tr("Privacy Policy"))
-                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button(L10n.tr("Done")) { dismiss() }
