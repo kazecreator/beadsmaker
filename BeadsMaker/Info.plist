@@ -19,9 +19,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>CFBundleVersion</key>
-	<string>15</string>
+	<string>1</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to scan QR codes shared by other BeadsMaker users.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
