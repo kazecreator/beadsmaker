@@ -1,39 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玩豆（BeadsMaker）</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f6f0;
-            color: #1a1a1a;
-            line-height: 1.6;
-            display: flex; flex-direction: column; min-height: 100vh;
-        }
-        .hero { text-align: center; padding: 80px 24px 48px; }
-        .hero h1 { font-size: 48px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px; }
-        .hero p { font-size: 18px; color: #666; max-width: 480px; margin: 0 auto; }
-        .links { text-align: center; padding: 0 24px 64px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-        .links a { padding: 12px 28px; background: #1a1a1a; color: #fff; text-decoration: none; border-radius: 12px; font-weight: 500; font-size: 15px; }
-        .links a:hover { opacity: 0.8; }
-        .links a.secondary { background: #fff; color: #1a1a1a; border: 1px solid #e0ddd6; }
-        footer { margin-top: auto; text-align: center; padding: 32px 24px; color: #999; font-size: 13px; }
-        footer a { color: #666; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="玩豆（BeadsMaker）是一款以创作为中心的 iPhone 拼豆图纸工具。">
+  <title>玩豆（BeadsMaker）</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="hero">
-        <h1>玩豆（BeadsMaker）</h1>
-        <p>一个以创作为中心的拼豆图纸工具。设计像素拼豆图纸，预览完成效果，并导出清晰图片用于分享或现实拼豆制作。</p>
-        <p>Wandou (BeadsMaker) is a creator-first pixel bead pattern tool for designing, previewing, and exporting clear images for sharing or real-world crafting.</p>
-    </div>
-    <div class="links">
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="mailto:kazecreator@gmail.com" class="secondary">Contact</a>
-    </div>
-    <footer>&copy; 2026 玩豆（BeadsMaker） &middot; <a href="privacy.html">Privacy</a> &middot; <a href="support.html">Support</a></footer>
+  <div class="site-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand-link" href="index.html" aria-label="玩豆（BeadsMaker）首页">
+        <img src="assets/app-icon.png" alt="">
+        <span>玩豆（BeadsMaker）</span>
+      </a>
+      <div class="nav-links">
+        <a href="support.html">Support</a>
+        <a href="privacy.html">Privacy</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">iPhone bead pattern studio</p>
+          <h1>BeadsMaker</h1>
+          <p class="lead">玩豆（BeadsMaker）是一款以创作为中心的拼豆图纸工具。打开就能画，在真实 pegboard 质感上摆放颜色，预览完成效果，并把清晰 PNG 保存到相册用于现实拼豆制作。</p>
+          <p class="lead">A quiet, local-first studio for designing pixel bead patterns, previewing the finished piece, and exporting images for real-world crafting.</p>
+          <div class="cta-row">
+            <a class="button primary" href="https://apps.apple.com/cn/app/beadsmaker/id6764291982">Download on the App Store</a>
+            <a class="button" href="support.html">Get Support</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="app-top">
+                <div class="app-title">Create</div>
+                <div class="pill">16 x 16</div>
+              </div>
+              <div class="pegboard">
+                <div class="bead-grid">
+                  <i class="bead empty"></i><i class="bead yellow"></i><i class="bead yellow"></i><i class="bead empty"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead empty"></i><i class="bead blue"></i><i class="bead empty"></i>
+                  <i class="bead yellow"></i><i class="bead yellow"></i><i class="bead yellow"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead blue"></i>
+                  <i class="bead yellow"></i><i class="bead yellow"></i><i class="bead black"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead black"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead blue"></i>
+                  <i class="bead empty"></i><i class="bead yellow"></i><i class="bead yellow"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead empty"></i>
+                  <i class="bead green"></i><i class="bead green"></i><i class="bead empty"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead empty"></i><i class="bead yellow"></i><i class="bead yellow"></i><i class="bead yellow"></i>
+                  <i class="bead green"></i><i class="bead green"></i><i class="bead green"></i><i class="bead empty"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead yellow"></i><i class="bead black"></i><i class="bead yellow"></i>
+                  <i class="bead empty"></i><i class="bead green"></i><i class="bead green"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead yellow"></i><i class="bead yellow"></i><i class="bead empty"></i>
+                  <i class="bead black"></i><i class="bead empty"></i><i class="bead green"></i><i class="bead blue"></i><i class="bead blue"></i><i class="bead empty"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead coral"></i>
+                  <i class="bead empty"></i><i class="bead empty"></i><i class="bead green"></i><i class="bead empty"></i><i class="bead blue"></i><i class="bead empty"></i><i class="bead coral"></i><i class="bead coral"></i><i class="bead empty"></i>
+                </div>
+              </div>
+              <div class="palette">
+                <span class="swatch black"></span>
+                <span class="swatch coral"></span>
+                <span class="swatch blue"></span>
+                <span class="swatch yellow"></span>
+                <span class="swatch green"></span>
+              </div>
+              <div class="bottom-bar">
+                <div class="app-button">Save Draft</div>
+                <div class="app-button primary">Preview</div>
+              </div>
+            </div>
+          </div>
+          <div class="app-icon-card">
+            <img src="assets/app-icon.png" alt="">
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-band">
+        <div class="section">
+          <h2>Creation first, from first tap to export.</h2>
+          <div class="feature-grid">
+            <article class="feature">
+              <div class="feature-mark"></div>
+              <h3>Pegboard editing</h3>
+              <p>Draw directly on a bead-style board with round beads, center holes, soft shadows, and numbered orientation marks.</p>
+            </article>
+            <article class="feature">
+              <div class="feature-mark"></div>
+              <h3>Finished preview</h3>
+              <p>Inspect the completed piece in a restrained preview designed for checking the work, not walking through making steps.</p>
+            </article>
+            <article class="feature">
+              <div class="feature-mark"></div>
+              <h3>Local-first export</h3>
+              <p>Save drafts on device, export finished PNG images to Photos, and keep creating without forced login.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>&copy; 2026 玩豆（BeadsMaker）</span>
+      <span><a href="privacy.html">Privacy Policy</a> · <a href="support.html">Support</a> · <a href="mailto:kazecreator@gmail.com">Contact</a></span>
+    </footer>
+  </div>
 </body>
 </html>
