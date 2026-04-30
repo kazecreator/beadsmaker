@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-lang="zh">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="玩豆（BeadsMaker）支持页面。">
   <title>Support — 玩豆（BeadsMaker）</title>
+  <script src="language.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,22 +17,27 @@
       </a>
       <div class="nav-links">
         <a href="https://apps.apple.com/cn/app/beadsmaker/id6764291982">App Store</a>
-        <a href="privacy.html">Privacy</a>
+        <a href="privacy.html"><span data-lang-block="zh">隐私</span><span data-lang-block="en">Privacy</span></a>
+        <div class="language-switch" aria-label="Language">
+          <button type="button" data-set-language="zh">中</button>
+          <button type="button" data-set-language="en">EN</button>
+        </div>
       </div>
     </nav>
 
     <main class="content-page">
       <section class="content-card">
-        <p class="eyebrow">Support</p>
-        <h1>玩豆支持</h1>
-        <p class="muted">如果你在使用玩豆（BeadsMaker）时遇到导出、草稿、Pro 购买或 iCloud 同步问题，可以通过邮件联系开发者。</p>
+        <p class="eyebrow"><span data-lang-block="zh">支持</span><span data-lang-block="en">Support</span></p>
+        <h1><span data-lang-block="zh">玩豆支持</span><span data-lang-block="en">Wandou (BeadsMaker) Support</span></h1>
+        <p class="muted" data-lang-block="zh">如果你在使用玩豆（BeadsMaker）时遇到导出、草稿、Pro 购买或 iCloud 同步问题，可以通过邮件联系开发者。</p>
+        <p class="muted" data-lang-block="en">If you run into export, draft, Pro purchase, or iCloud sync issues while using Wandou (BeadsMaker), email the developer for support.</p>
         <div class="cta-row">
-          <a class="button primary" href="mailto:kazecreator@gmail.com">Email Support</a>
-          <a class="button" href="https://apps.apple.com/cn/app/beadsmaker/id6764291982">Open App Store</a>
+          <a class="button primary" href="mailto:kazecreator@gmail.com"><span data-lang-block="zh">邮件联系支持</span><span data-lang-block="en">Email Support</span></a>
+          <a class="button" href="https://apps.apple.com/cn/app/beadsmaker/id6764291982"><span data-lang-block="zh">打开 App Store</span><span data-lang-block="en">Open App Store</span></a>
         </div>
       </section>
 
-      <section class="content-card">
+      <section class="content-card" data-lang-block="zh">
         <h2>常见问题</h2>
         <ul>
           <li>本地草稿保存在当前设备上。删除 App 可能会删除本地草稿。</li>
@@ -41,7 +47,7 @@
         </ul>
       </section>
 
-      <section class="content-card">
+      <section class="content-card" data-lang-block="en">
         <h2>Wandou (BeadsMaker) Support</h2>
         <ul>
           <li>Local drafts are stored on this device. Removing the app may delete local drafts.</li>
@@ -54,7 +60,7 @@
 
     <footer class="site-footer">
       <span>&copy; 2026 玩豆（BeadsMaker）</span>
-      <span><a href="index.html">Home</a> · <a href="privacy.html">Privacy Policy</a> · <a href="mailto:kazecreator@gmail.com">Contact</a></span>
+      <span><a href="index.html"><span data-lang-block="zh">首页</span><span data-lang-block="en">Home</span></a> · <a href="privacy.html"><span data-lang-block="zh">隐私政策</span><span data-lang-block="en">Privacy Policy</span></a> · <a href="mailto:kazecreator@gmail.com"><span data-lang-block="zh">联系</span><span data-lang-block="en">Contact</span></a></span>
     </footer>
   </div>
 </body>

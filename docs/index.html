@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-lang="zh">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="玩豆（BeadsMaker）是一款以创作为中心的 iPhone 拼豆图纸工具。">
   <title>玩豆（BeadsMaker）</title>
+  <script src="language.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,21 +16,25 @@
         <span>玩豆（BeadsMaker）</span>
       </a>
       <div class="nav-links">
-        <a href="support.html">Support</a>
-        <a href="privacy.html">Privacy</a>
+        <a href="support.html"><span data-lang-block="zh">支持</span><span data-lang-block="en">Support</span></a>
+        <a href="privacy.html"><span data-lang-block="zh">隐私</span><span data-lang-block="en">Privacy</span></a>
+        <div class="language-switch" aria-label="Language">
+          <button type="button" data-set-language="zh">中</button>
+          <button type="button" data-set-language="en">EN</button>
+        </div>
       </div>
     </nav>
 
     <main>
       <section class="hero">
         <div>
-          <p class="eyebrow">iPhone bead pattern studio</p>
+          <p class="eyebrow"><span data-lang-block="zh">iPhone 拼豆图纸工作室</span><span data-lang-block="en">iPhone bead pattern studio</span></p>
           <h1>BeadsMaker</h1>
-          <p class="lead">玩豆（BeadsMaker）是一款以创作为中心的拼豆图纸工具。打开就能画，在真实 pegboard 质感上摆放颜色，预览完成效果，并把清晰 PNG 保存到相册用于现实拼豆制作。</p>
-          <p class="lead">A quiet, local-first studio for designing pixel bead patterns, previewing the finished piece, and exporting images for real-world crafting.</p>
+          <p class="lead" data-lang-block="zh">玩豆（BeadsMaker）是一款以创作为中心的拼豆图纸工具。打开就能画，在真实 pegboard 质感上摆放颜色，预览完成效果，并把清晰 PNG 保存到相册用于现实拼豆制作。</p>
+          <p class="lead" data-lang-block="en">A quiet, local-first studio for designing pixel bead patterns, previewing the finished piece, and exporting images for real-world crafting.</p>
           <div class="cta-row">
-            <a class="button primary" href="https://apps.apple.com/cn/app/beadsmaker/id6764291982">Download on the App Store</a>
-            <a class="button" href="support.html">Get Support</a>
+            <a class="button primary" href="https://apps.apple.com/cn/app/beadsmaker/id6764291982"><span data-lang-block="zh">前往 App Store 下载</span><span data-lang-block="en">Download on the App Store</span></a>
+            <a class="button" href="support.html"><span data-lang-block="zh">获取支持</span><span data-lang-block="en">Get Support</span></a>
           </div>
         </div>
 
@@ -46,22 +51,22 @@
 
       <section class="feature-band">
         <div class="section">
-          <h2>Creation first, from first tap to export.</h2>
+          <h2><span data-lang-block="zh">从第一笔到导出，都以创作为先。</span><span data-lang-block="en">Creation first, from first tap to export.</span></h2>
           <div class="feature-grid">
             <article class="feature">
               <div class="feature-mark"></div>
-              <h3>Pegboard editing</h3>
-              <p>Draw directly on a bead-style board with round beads, center holes, soft shadows, and numbered orientation marks.</p>
+              <h3><span data-lang-block="zh">Pegboard 编辑</span><span data-lang-block="en">Pegboard editing</span></h3>
+              <p><span data-lang-block="zh">在拼豆质感的画板上直接创作，圆形拼豆、中心孔、柔和阴影和行列数字都会帮助你保持方向感。</span><span data-lang-block="en">Draw directly on a bead-style board with round beads, center holes, soft shadows, and numbered orientation marks.</span></p>
             </article>
             <article class="feature">
               <div class="feature-mark"></div>
-              <h3>Finished preview</h3>
-              <p>Inspect the completed piece in a restrained preview designed for checking the work, not walking through making steps.</p>
+              <h3><span data-lang-block="zh">完成效果预览</span><span data-lang-block="en">Finished preview</span></h3>
+              <p><span data-lang-block="zh">用克制、清爽的预览检查完成作品。这里用于确认结果，不提供步骤式制作流程。</span><span data-lang-block="en">Inspect the completed piece in a restrained preview designed for checking the work, not walking through making steps.</span></p>
             </article>
             <article class="feature">
               <div class="feature-mark"></div>
-              <h3>Local-first export</h3>
-              <p>Save drafts on device, export finished PNG images to Photos, and keep creating without forced login.</p>
+              <h3><span data-lang-block="zh">本地优先导出</span><span data-lang-block="en">Local-first export</span></h3>
+              <p><span data-lang-block="zh">草稿保存在设备本地，完成图可以导出为 PNG 到相册。不强制登录，先把创作留给你。</span><span data-lang-block="en">Save drafts on device, export finished PNG images to Photos, and keep creating without forced login.</span></p>
             </article>
           </div>
         </div>
@@ -70,7 +75,7 @@
 
     <footer class="site-footer">
       <span>&copy; 2026 玩豆（BeadsMaker）</span>
-      <span><a href="privacy.html">Privacy Policy</a> · <a href="support.html">Support</a> · <a href="mailto:kazecreator@gmail.com">Contact</a></span>
+      <span><a href="privacy.html"><span data-lang-block="zh">隐私政策</span><span data-lang-block="en">Privacy Policy</span></a> · <a href="support.html"><span data-lang-block="zh">支持</span><span data-lang-block="en">Support</span></a> · <a href="mailto:kazecreator@gmail.com"><span data-lang-block="zh">联系</span><span data-lang-block="en">Contact</span></a></span>
     </footer>
   </div>
 </body>

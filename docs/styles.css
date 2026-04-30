@@ -23,6 +23,11 @@ html {
   background: var(--background);
 }
 
+html[data-lang="zh"] [data-lang-block="en"],
+html[data-lang="en"] [data-lang-block="zh"] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -55,6 +60,7 @@ a {
 .brand-link {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 10px;
   text-decoration: none;
   font-size: 15px;
@@ -71,6 +77,7 @@ a {
 .nav-links {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 6px;
 }
 
@@ -84,11 +91,40 @@ a {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .nav-links a:hover {
   background: var(--surface);
   color: var(--ink);
+}
+
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.language-switch button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-switch button.is-active {
+  background: var(--ink);
+  color: #ffffff;
 }
 
 .hero {
@@ -339,6 +375,10 @@ h1 {
     gap: 12px;
   }
 
+  .nav-links {
+    gap: 4px;
+  }
+
   .brand-link span {
     white-space: nowrap;
   }
@@ -411,8 +451,16 @@ h1 {
   }
 
   .nav-links a {
-    padding: 0 8px;
+    padding: 0 7px;
     font-size: 13px;
+  }
+
+  .nav-links a[href*="apps.apple.com"] {
+    display: none;
+  }
+
+  .language-switch button {
+    padding: 0 8px;
   }
 
   h1 {
