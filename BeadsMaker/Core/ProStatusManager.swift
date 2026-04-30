@@ -54,6 +54,8 @@ enum PurchaseResult {
 @MainActor
 final class ProStatusManager: ObservableObject {
     static let productID = "com.beadsmaker.pro"
+    private static let productLoadTimeout: Duration = .seconds(8)
+    private static let purchaseTimeout: Duration = .seconds(45)
 
     /// Reflects the current Pro entitlement (Keychain-backed, survives reinstalls).
     @Published private(set) var isPro: Bool
@@ -73,9 +75,22 @@ final class ProStatusManager: ObservableObject {
     /// True when StoreKit product loading failed (network issue, misconfiguration, etc.).
     @Published private(set) var productLoadFailed = false
 
+    private var transactionUpdatesTask: Task<Void, Never>?
+
     init() {
+        #if DEBUG
         self.isPro = ProKeychain.read()
+        #else
+        self.isPro = false
+        #endif
+        transactionUpdatesTask = Task { [weak self] in
+            await self?.listenForTransactionUpdates()
+        }
         Task { await loadProductAndVerify() }
+    }
+
+    deinit {
+        transactionUpdatesTask?.cancel()
     }
 
     // MARK: - Purchase
@@ -88,24 +103,27 @@ final class ProStatusManager: ObservableObject {
         // When product is nil in debug builds, simulate a successful purchase so the
         // downstream flow (Apple Sign In → ConfirmNameView → Supabase) can be regression-tested.
         if product == nil {
-            await applyPro()
+            applyPro()
             return .success
         }
         #endif
 
         guard let product else {
-            return .failed(L10n.tr("Product not available. Check your internet connection."))
+            let message = L10n.tr("Product not available. Please try again later.")
+            errorMessage = message
+            productLoadFailed = true
+            return .failed(message)
         }
         purchaseInProgress = true
         errorMessage = nil
         defer { purchaseInProgress = false }
 
         do {
-            let result = try await product.purchase()
+            let result = try await purchaseResult(for: product)
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
-                await applyPro()
+                applyPro()
                 await transaction.finish()
                 return .success
 
@@ -116,8 +134,14 @@ final class ProStatusManager: ObservableObject {
                 return .pending
 
             @unknown default:
-                return .failed(L10n.tr("Unknown purchase result."))
+                let message = L10n.tr("Unknown purchase result.")
+                errorMessage = message
+                return .failed(message)
             }
+        } catch ProStatusError.purchaseTimedOut {
+            let message = L10n.tr("Purchase is taking longer than expected. Please try again.")
+            errorMessage = message
+            return .failed(message)
         } catch {
             let message = error.localizedDescription
             errorMessage = message
@@ -150,10 +174,11 @@ final class ProStatusManager: ObservableObject {
             if case .verified(let transaction) = result,
                transaction.productID == Self.productID,
                transaction.revocationDate == nil {
-                await applyPro()
+                applyPro()
                 return
             }
         }
+        clearPro()
     }
 
     // MARK: - Helpers
@@ -165,12 +190,25 @@ final class ProStatusManager: ObservableObject {
 
     private func loadProductAndVerify() async {
         do {
-            let products = try await Product.products(for: [Self.productID])
-            self.product = products.first
-            productLoadFailed = false
+            let products = try await loadProductsWithTimeout()
+            if let product = products.first {
+                self.product = product
+                productLoadFailed = false
+                errorMessage = nil
+            } else {
+                self.product = nil
+                productLoadFailed = true
+                errorMessage = L10n.tr("No in-app purchase products are available right now.")
+            }
             print("[ProStatusManager] Loaded \(products.count) product(s). product=\(String(describing: products.first?.id))")
+        } catch ProStatusError.productLoadTimedOut {
+            print("[ProStatusManager] Product load TIMED OUT")
+            product = nil
+            productLoadFailed = true
+            errorMessage = L10n.tr("Product information is taking longer than expected. Please try again.")
         } catch {
             print("[ProStatusManager] Product load FAILED: \(error)")
+            product = nil
             productLoadFailed = true
         }
         await checkEntitlements()
@@ -192,9 +230,65 @@ final class ProStatusManager: ObservableObject {
     }
     #endif
 
-    private func applyPro() async {
+    private func applyPro() {
         isPro = true
         ProKeychain.write(true)
+    }
+
+    private func clearPro() {
+        isPro = false
+        ProKeychain.write(false)
+    }
+
+    private func loadProductsWithTimeout() async throws -> [Product] {
+        try await withThrowingTaskGroup(of: [Product].self) { group in
+            group.addTask {
+                try await Product.products(for: [Self.productID])
+            }
+            group.addTask {
+                try await Task.sleep(for: Self.productLoadTimeout)
+                throw ProStatusError.productLoadTimedOut
+            }
+
+            guard let products = try await group.next() else {
+                throw ProStatusError.productLoadTimedOut
+            }
+            group.cancelAll()
+            return products
+        }
+    }
+
+    private func purchaseResult(for product: Product) async throws -> Product.PurchaseResult {
+        try await withThrowingTaskGroup(of: Product.PurchaseResult.self) { group in
+            group.addTask {
+                try await product.purchase()
+            }
+            group.addTask {
+                try await Task.sleep(for: Self.purchaseTimeout)
+                throw ProStatusError.purchaseTimedOut
+            }
+
+            guard let result = try await group.next() else {
+                throw ProStatusError.purchaseTimedOut
+            }
+            group.cancelAll()
+            return result
+        }
+    }
+
+    private func listenForTransactionUpdates() async {
+        for await result in Transaction.updates {
+            do {
+                let transaction = try checkVerified(result)
+                guard transaction.productID == Self.productID else { continue }
+                if transaction.revocationDate == nil {
+                    applyPro()
+                }
+                await transaction.finish()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
     }
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
@@ -211,11 +305,17 @@ final class ProStatusManager: ObservableObject {
 
 enum ProStatusError: LocalizedError {
     case failedVerification
+    case productLoadTimedOut
+    case purchaseTimedOut
 
     var errorDescription: String? {
         switch self {
         case .failedVerification:
             return L10n.tr("Transaction verification failed.")
+        case .productLoadTimedOut:
+            return L10n.tr("Product information is taking longer than expected. Please try again.")
+        case .purchaseTimedOut:
+            return L10n.tr("Purchase is taking longer than expected. Please try again.")
         }
     }
 }

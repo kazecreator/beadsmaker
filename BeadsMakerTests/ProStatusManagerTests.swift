@@ -4,10 +4,17 @@ import XCTest
 @MainActor
 final class ProStatusManagerTests: XCTestCase {
 
+    private func makeSessionStore() -> AppSessionStore {
+        let suiteName = "BeadsMakerTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return AppSessionStore(userService: MockUserService(defaults: defaults))
+    }
+
     // MARK: - AppSessionStore upgrade methods
 
     func testUpgradeToProSetsIsPro() {
-        let store = AppSessionStore(userService: MockUserService())
+        let store = makeSessionStore()
         XCTAssertFalse(store.currentUser.isPro, "Guest should start as non-Pro")
 
         store.upgradeToPro()
@@ -16,7 +23,7 @@ final class ProStatusManagerTests: XCTestCase {
     }
 
     func testLinkAppleAccountUpdatesFields() {
-        let store = AppSessionStore(userService: MockUserService())
+        let store = makeSessionStore()
         XCTAssertTrue(store.currentUser.isGuest, "Should start as guest")
         XCTAssertNil(store.currentUser.appleUserID, "appleUserID should start nil")
 
@@ -28,7 +35,7 @@ final class ProStatusManagerTests: XCTestCase {
     }
 
     func testLinkAppleAccountKeepsExistingNameWhenGivenEmpty() {
-        let store = AppSessionStore(userService: MockUserService())
+        let store = makeSessionStore()
         let originalName = store.currentUser.displayName
 
         store.linkAppleAccount(appleUserID: "apple-abc123", displayName: "   ")

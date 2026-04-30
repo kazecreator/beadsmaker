@@ -39,6 +39,11 @@ final class AppSessionStore: ObservableObject {
         currentUser.isPro = true
     }
 
+    /// Keeps the in-memory guest profile aligned with the verified StoreKit entitlement.
+    func setProStatus(_ isPro: Bool) {
+        currentUser.isPro = isPro
+    }
+
     #if DEBUG
     func debugResetUser() {
         currentUser = userService.bootstrapGuestUser()

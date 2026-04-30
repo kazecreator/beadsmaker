@@ -101,11 +101,10 @@ struct BeadsMakerApp: App {
                 if !proStatusManager.isPro {
                     await proStatusManager.checkEntitlements()
                 }
-                if proStatusManager.isPro {
-                    sessionStore.upgradeToPro()
-                }
+                sessionStore.setProStatus(proStatusManager.isPro)
             }
             .onChange(of: proStatusManager.isPro) { _, isPro in
+                sessionStore.setProStatus(isPro)
                 guard isPro, !patternService.isUsingiCloud else { return }
                 Task {
                     await migrateToiCloud()

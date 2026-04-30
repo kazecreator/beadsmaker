@@ -197,7 +197,7 @@ struct ProInfoView: View {
 
     private var restoreButton: some View {
         Button {
-            Task { await proStatusManager.restorePurchases() }
+            Task { await handleRestore() }
         } label: {
             if proStatusManager.restoreInProgress {
                 ProgressView()
@@ -224,6 +224,14 @@ struct ProInfoView: View {
             dismiss()
         case .userCancelled, .failed:
             break
+        }
+    }
+
+    private func handleRestore() async {
+        await proStatusManager.restorePurchases()
+        if proStatusManager.isPro {
+            sessionStore.upgradeToPro()
+            dismiss()
         }
     }
 

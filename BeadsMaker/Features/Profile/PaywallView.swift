@@ -224,8 +224,7 @@ struct PaywallView: View {
         let mockResult = AppleSignInResult(appleUserID: "debug-apple-user-\(UUID().uuidString)", displayName: nil, email: nil)
         signInResult = mockResult
         isShowingConfirmName = true
-        return
-        #endif
+        #else
         do {
             let result = try await appleSignInManager.signIn()
             print("[PaywallView] signIn succeeded: \(result.appleUserID)")
@@ -242,6 +241,7 @@ struct PaywallView: View {
             onUpgradeComplete?()
             dismiss()
         }
+        #endif
     }
 
     // MARK: - Helpers
