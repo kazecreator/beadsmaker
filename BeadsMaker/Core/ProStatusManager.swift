@@ -49,6 +49,15 @@ enum PurchaseResult {
     case failed(String)
 }
 
+// MARK: - Product load state
+
+enum ProductLoadState {
+    case loading
+    case loaded(Product)
+    case unavailable
+    case error
+}
+
 // MARK: - ProStatusManager
 
 @MainActor
@@ -60,8 +69,14 @@ final class ProStatusManager: ObservableObject {
     /// Reflects the current Pro entitlement (Keychain-backed, survives reinstalls).
     @Published private(set) var isPro: Bool
 
-    /// The StoreKit product once loaded.
-    @Published private(set) var product: Product?
+    /// The StoreKit product once loaded. Derived from `productLoadState`.
+    var product: Product? {
+        if case .loaded(let product) = productLoadState { return product }
+        return nil
+    }
+
+    /// Current state of StoreKit product loading.
+    @Published private(set) var productLoadState: ProductLoadState = .loading
 
     /// True while a purchase is in-flight.
     @Published private(set) var purchaseInProgress = false
@@ -71,9 +86,6 @@ final class ProStatusManager: ObservableObject {
 
     /// Non-nil when the last purchase or restore attempt produced a user-visible error.
     @Published var errorMessage: String?
-
-    /// True when StoreKit product loading failed (network issue, misconfiguration, etc.).
-    @Published private(set) var productLoadFailed = false
 
     private var transactionUpdatesTask: Task<Void, Never>?
 
@@ -87,10 +99,26 @@ final class ProStatusManager: ObservableObject {
             await self?.listenForTransactionUpdates()
         }
         Task { await loadProductAndVerify() }
+
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                await self.recheckIfUnavailable()
+            }
+        }
     }
 
     deinit {
         transactionUpdatesTask?.cancel()
+    }
+
+    private func recheckIfUnavailable() async {
+        guard case .unavailable = productLoadState else { return }
+        await loadProductAndVerify()
     }
 
     // MARK: - Purchase
@@ -111,7 +139,6 @@ final class ProStatusManager: ObservableObject {
         guard let product else {
             let message = L10n.tr("Product not available. Please try again later.")
             errorMessage = message
-            productLoadFailed = true
             return .failed(message)
         }
         purchaseInProgress = true
@@ -184,7 +211,8 @@ final class ProStatusManager: ObservableObject {
     // MARK: - Helpers
 
     func retryLoadProduct() async {
-        productLoadFailed = false
+        productLoadState = .loading
+        errorMessage = nil
         await loadProductAndVerify()
     }
 
@@ -192,24 +220,19 @@ final class ProStatusManager: ObservableObject {
         do {
             let products = try await loadProductsWithTimeout()
             if let product = products.first {
-                self.product = product
-                productLoadFailed = false
+                productLoadState = .loaded(product)
                 errorMessage = nil
             } else {
-                self.product = nil
-                productLoadFailed = true
-                errorMessage = L10n.tr("No in-app purchase products are available right now.")
+                productLoadState = .unavailable
             }
             print("[ProStatusManager] Loaded \(products.count) product(s). product=\(String(describing: products.first?.id))")
         } catch ProStatusError.productLoadTimedOut {
             print("[ProStatusManager] Product load TIMED OUT")
-            product = nil
-            productLoadFailed = true
+            productLoadState = .error
             errorMessage = L10n.tr("Product information is taking longer than expected. Please try again.")
         } catch {
             print("[ProStatusManager] Product load FAILED: \(error)")
-            product = nil
-            productLoadFailed = true
+            productLoadState = .error
         }
         await checkEntitlements()
     }
@@ -217,7 +240,7 @@ final class ProStatusManager: ObservableObject {
     #if DEBUG
     func debugResetPro() {
         isPro = false
-        product = nil
+        productLoadState = .loading
         ProKeychain.write(false)
         Task { await loadProductAndVerify() }
     }

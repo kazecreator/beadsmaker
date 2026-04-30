@@ -359,19 +359,21 @@ struct ProfileView: View {
 
     private var syncIconName: String {
         switch syncManager.syncStatus {
-        case .unavailable, .notPro: return "icloud.slash"
-        case .syncing:              return "icloud.and.arrow.down"
-        case .upToDate:             return "checkmark.icloud"
-        case .error:                return "xmark.icloud"
+        case .notPro:              return "icloud"
+        case .unavailable:         return "icloud.slash"
+        case .syncing:             return "icloud.and.arrow.down"
+        case .upToDate:            return "checkmark.icloud"
+        case .error:               return "xmark.icloud"
         }
     }
 
     private var syncIconColor: Color {
         switch syncManager.syncStatus {
-        case .upToDate: return .green
-        case .syncing:  return .blue
-        case .error:    return .red
-        default:        return BeadsMakerTheme.ink
+        case .upToDate:            return .green
+        case .syncing:             return .blue
+        case .error:               return .red
+        case .unavailable:         return .secondary
+        case .notPro:              return BeadsMakerTheme.ink
         }
     }
 

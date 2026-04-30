@@ -116,9 +116,66 @@ struct PaywallView: View {
         .pbCard()
     }
 
+    @ViewBuilder
     private var ctaCard: some View {
-        VStack(spacing: 12) {
-            if proStatusManager.productLoadFailed {
+        switch proStatusManager.productLoadState {
+        case .loading:
+            VStack(spacing: 12) {
+                Button {
+                    // no-op: still loading
+                } label: {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(true)
+
+                restoreButton
+            }
+            .pbCard()
+
+        case .loaded:
+            VStack(spacing: 12) {
+                Button {
+                    Task { await handlePurchase() }
+                } label: {
+                    if proStatusManager.purchaseInProgress {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(proStatusManager.purchaseInProgress)
+
+                restoreButton
+            }
+            .pbCard()
+
+        case .unavailable:
+            VStack(spacing: 12) {
+                VStack(spacing: 12) {
+                    Image(systemName: "clock.badge.questionmark")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text(L10n.tr("Pro features are coming soon"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(BeadsMakerTheme.ink)
+                    Text(L10n.tr("We're finalizing the Pro purchase with the App Store. Check back shortly."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(16)
+
+                restoreButton
+            }
+            .pbCard()
+
+        case .error:
+            VStack(spacing: 12) {
                 VStack(spacing: 12) {
                     Image(systemName: "wifi.slash")
                         .font(.title2)
@@ -142,41 +199,26 @@ struct PaywallView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(16)
-            } else {
-                Button {
-                    Task { await handlePurchase() }
-                } label: {
-                    if proStatusManager.purchaseInProgress {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Label(L10n.tr("Upgrade to Pro"), systemImage: "crown")
-                    }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled({
-                    #if DEBUG
-                    return proStatusManager.purchaseInProgress
-                    #else
-                    return proStatusManager.purchaseInProgress || proStatusManager.product == nil
-                    #endif
-                }())
-            }
 
-            Button {
-                Task { await handleRestore() }
-            } label: {
-                if proStatusManager.restoreInProgress {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text(L10n.tr("Restore Purchase"))
-                }
+                restoreButton
             }
-            .buttonStyle(SecondaryButtonStyle())
-            .disabled(proStatusManager.restoreInProgress)
+            .pbCard()
         }
-        .pbCard()
+    }
+
+    private var restoreButton: some View {
+        Button {
+            Task { await handleRestore() }
+        } label: {
+            if proStatusManager.restoreInProgress {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+            } else {
+                Text(L10n.tr("Restore Purchase"))
+            }
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .disabled(proStatusManager.restoreInProgress)
     }
 
     // MARK: - Actions

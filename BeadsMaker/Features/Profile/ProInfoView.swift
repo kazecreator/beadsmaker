@@ -88,7 +88,25 @@ struct ProInfoView: View {
     @ViewBuilder
     private var subscribeSection: some View {
         VStack(spacing: 16) {
-            if let product = proStatusManager.product {
+            switch proStatusManager.productLoadState {
+            case .loading:
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .tint(BeadsMakerTheme.ink)
+                    Text(L10n.tr("Loading product information..."))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
+                        .stroke(BeadsMakerTheme.outline, lineWidth: 1)
+                )
+
+            case .loaded(let product):
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n.tr("BeadsMaker Pro"))
@@ -113,7 +131,32 @@ struct ProInfoView: View {
 
                 purchaseButton
                 restoreButton
-            } else if proStatusManager.productLoadFailed {
+
+            case .unavailable:
+                VStack(spacing: 12) {
+                    Image(systemName: "clock.badge.questionmark")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text(L10n.tr("Pro features are coming soon"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(BeadsMakerTheme.ink)
+                    Text(L10n.tr("We're finalizing the Pro purchase with the App Store. Check back shortly."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(16)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
+                        .stroke(BeadsMakerTheme.outline, lineWidth: 1)
+                )
+
+                restoreButton
+
+            case .error:
                 VStack(spacing: 12) {
                     Image(systemName: "wifi.slash")
                         .font(.title2)
@@ -146,22 +189,6 @@ struct ProInfoView: View {
                 )
 
                 restoreButton
-            } else {
-                HStack(spacing: 12) {
-                    ProgressView()
-                        .tint(BeadsMakerTheme.ink)
-                    Text(L10n.tr("Loading product information..."))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(20)
-                .background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: BeadsMakerTheme.Radius.card, style: .continuous)
-                        .stroke(BeadsMakerTheme.outline, lineWidth: 1)
-                )
             }
 
             if let message = proStatusManager.errorMessage {
