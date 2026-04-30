@@ -40,7 +40,7 @@ targets:
       path: BeadsMaker/Info.plist
       properties:
         CFBundleDisplayName: BeadsMaker
-        CFBundleShortVersionString: "1.0"
+        CFBundleShortVersionString: "1.0.1"
         CFBundleVersion: "14"
         UILaunchScreen: {}
         NSPhotoLibraryAddUsageDescription: Photo library access is used to save finished PNG exports.
